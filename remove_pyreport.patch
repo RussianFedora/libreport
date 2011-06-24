@@ -1,0 +1,6 @@
+diff -urp libreport-2.0.2/src/Makefile.am libreport-2.0.2_/src/Makefile.am
+--- libreport-2.0.2/src/Makefile.am	2011-06-08 17:15:03.000000000 +0200
++++ libreport-2.0.2_/src/Makefile.am	2011-06-09 11:31:01.494126920 +0200
+@@ -1 +1 @@
+-SUBDIRS = include lib report-python gtk-helpers gui-wizard-gtk cli
++SUBDIRS = include lib gtk-helpers gui-wizard-gtk cli
