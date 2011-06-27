@@ -4,7 +4,7 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.3
+Version: 2.0.4
 Release: 1%{?dist}.1.R
 License: GPLv2+
 Group: System Environment/Libraries
@@ -139,21 +139,15 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %files devel
 %defattr(-,root,root,-)
-%{_includedir}/libreport/abrt_dbus.h
+# Public api headers:
 %{_includedir}/libreport/dump_dir.h
 %{_includedir}/libreport/event_config.h
-%{_includedir}/libreport/hash_sha1.h
-%{_includedir}/libreport/libreport.h
-%{_includedir}/libreport/libreport_problem_data.h
-%{_includedir}/libreport/libreport_types.h
-%{_includedir}/libreport/logging.h
-%{_includedir}/libreport/parse_options.h
 %{_includedir}/libreport/problem_data.h
-%{_includedir}/libreport/read_write.h
 %{_includedir}/libreport/report.h
 %{_includedir}/libreport/run_event.h
-%{_includedir}/libreport/strbuf.h
-%{_includedir}/libreport/xfuncs.h
+# Private api headers:
+%{_includedir}/libreport/internal_abrt_dbus.h
+%{_includedir}/libreport/internal_libreport.h
 %{_libdir}/libreport.so
 %{_libdir}/libabrt_dbus.so
 %{_libdir}/pkgconfig/libreport.pc
@@ -176,6 +170,11 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_libdir}/pkgconfig/libreport-gtk.pc
 
 %changelog
+* Mon Jun 27 2011 Arkady L. Shane <ashejn@yandex-team.ru> 2.0.4-1.1.R
+- update to 2.0.4
+  new upstream release
+  cleaned some header files
+
 * Fri Jun 24 2011 Arkady L. Shane <ashejn@yandex-team.ru> 2.0.3-1.1.R
 - read product from fedora-release
 
