@@ -5,7 +5,7 @@
 Summary: Generic library for reporting various problems
 Name: libreport
 Version: 2.0.4
-Release: 1%{?dist}.1.R
+Release: 2%{?dist}.1.R
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
@@ -64,8 +64,6 @@ with problem dump reports
 Summary: GTK front-end for libreport
 Group: User Interface/Desktops
 Requires: libreport = %{version}-%{release}
-Provides: report-gtk > 0.20
-Obsoletes: report-gtk <= 0.20
 
 %description gtk
 Applications for reporting bugs using libreport backend
@@ -170,6 +168,10 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_libdir}/pkgconfig/libreport-gtk.pc
 
 %changelog
+* Thu Jun 30 2011 Arkady L. Shane <ashejn@yandex-team.ru> 2.0.4-2.1.R
+- removed Provides/Obsoletes: report-gtk
+- Resolves: #715373
+
 * Mon Jun 27 2011 Arkady L. Shane <ashejn@yandex-team.ru> 2.0.4-1.1.R
 - update to 2.0.4
   new upstream release
