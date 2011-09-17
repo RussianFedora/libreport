@@ -1,0 +1,26 @@
+From 546844995e0a1d05b301dba987c64b69a6e9690a Mon Sep 17 00:00:00 2001
+From: Miroslav Lichvar <mlichvar@redhat.com>
+Date: Thu, 11 Aug 2011 15:00:57 +0200
+Subject: [PATCH 39/52] report-newt: fit reporting window to standard terminal
+ size
+
+---
+ src/report-newt/report-newt.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/src/report-newt/report-newt.c b/src/report-newt/report-newt.c
+index b59e31b..3509688 100644
+--- a/src/report-newt/report-newt.c
++++ b/src/report-newt/report-newt.c
+@@ -254,7 +254,7 @@ static void run_reporter(const char *dump_dir_name, struct reporter *r)
+     int x;
+ 
+     text = newtTextboxReflowed(0, 0, _("Reporting"), 35, 5, 5, 0);
+-    log.co = newtTextbox(0, 0, 60, 20, NEWT_FLAG_WRAP | NEWT_FLAG_SCROLL);
++    log.co = newtTextbox(0, 0, 60, 11, NEWT_FLAG_WRAP | NEWT_FLAG_SCROLL);
+     log.text = NULL;
+     bgrid = newtButtonBar(_("Ok"), &button, NULL);
+     grid = newtGridSimpleWindow(text, log.co, bgrid);
+-- 
+1.7.6
+

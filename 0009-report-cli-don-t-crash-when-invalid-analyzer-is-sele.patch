@@ -1,0 +1,26 @@
+From 68b8aaa4f2c54fbdf9fa3bacfe93c8fcefa35067 Mon Sep 17 00:00:00 2001
+From: Miroslav Lichvar <mlichvar@redhat.com>
+Date: Wed, 20 Jul 2011 15:53:32 +0200
+Subject: [PATCH 09/12] report-cli: don't crash when invalid analyzer is
+ selected (trac#294)
+
+---
+ src/cli/cli-report.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/src/cli/cli-report.c b/src/cli/cli-report.c
+index 784b37e..6ec7f96 100644
+--- a/src/cli/cli-report.c
++++ b/src/cli/cli-report.c
+@@ -620,7 +620,7 @@ char *select_event_option(GList *list_options)
+             continue;
+ 
+         picked = xatou(answer);
+-        if (picked > count)
++        if (picked > count || picked < 1)
+         {
+             fprintf(stdout, _("You have chosen number out of range"));
+             fprintf(stdout, "\n");
+-- 
+1.7.6
+

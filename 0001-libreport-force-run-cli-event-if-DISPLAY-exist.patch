@@ -1,0 +1,39 @@
+From f144695906aa98a8164dd2e4dd2257a92f8aadd9 Mon Sep 17 00:00:00 2001
+From: Nikola Pajkovsky <npajkovs@redhat.com>
+Date: Tue, 26 Jul 2011 09:41:14 +0200
+Subject: [PATCH 01/52] [libreport] force run cli event if DISPLAY exist
+
+Signed-off-by: Nikola Pajkovsky <npajkovs@redhat.com>
+---
+ src/include/report.h |    1 +
+ src/lib/report.c     |    2 +-
+ 2 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/src/include/report.h b/src/include/report.h
+index 410a24d..ae879b5 100644
+--- a/src/include/report.h
++++ b/src/include/report.h
+@@ -35,6 +35,7 @@ enum {
+                                       /* ("run reporters" is always on, has no flag (for now?)) */
+     LIBREPORT_RELOAD_DATA = (1 << 5), /* reload problem data after run (needs WAIT) */
+     LIBREPORT_DEL_DIR     = (1 << 6), /* delete directory after reporting */
++    LIBREPORT_RUN_CLI     = (1 << 7), /* run 'cli' instead of 'gui' */
+ };
+ 
+ int report_problem_in_dir(const char *dirname, int flags);
+diff --git a/src/lib/report.c b/src/lib/report.c
+index 3c365ae..4b9f5c9 100644
+--- a/src/lib/report.c
++++ b/src/lib/report.c
+@@ -48,7 +48,7 @@ int report_problem_in_dir(const char *dirname, int flags)
+         *pp++ = (char *)dirname;
+         *pp = NULL;
+ 
+-        if (!getenv("DISPLAY"))
++        if (!getenv("DISPLAY") || (flags & LIBREPORT_RUN_CLI))
+         {
+             /* GUI won't work, use command line tool instead */
+             path1 = BIN_DIR"/report-cli";
+-- 
+1.7.6
+

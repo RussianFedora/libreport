@@ -1,0 +1,102 @@
+From 07e991785371cf119e47b7efe063decf38c96dc4 Mon Sep 17 00:00:00 2001
+From: Denys Vlasenko <dvlasenk@redhat.com>
+Date: Tue, 30 Aug 2011 12:54:26 +0200
+Subject: [PATCH 1/2] reporter-bugzilla: fix file attaching (was using strlen
+ even on binary files)
+
+Signed-off-by: Denys Vlasenko <dvlasenk@redhat.com>
+---
+ src/plugins/reporter-bugzilla.c |    5 +++--
+ src/plugins/rhbz.c              |   26 +++++++++++++++-----------
+ src/plugins/rhbz.h              |    2 +-
+ 3 files changed, 19 insertions(+), 14 deletions(-)
+
+diff --git a/src/plugins/reporter-bugzilla.c b/src/plugins/reporter-bugzilla.c
+index 745ecbb..4bf8708 100644
+--- a/src/plugins/reporter-bugzilla.c
++++ b/src/plugins/reporter-bugzilla.c
+@@ -357,12 +357,13 @@ int main(int argc, char **argv)
+             off_t size = lseek(fd, 0, SEEK_END);
+             if (size < 0)
+             {
+-                close(fd);
+                 perror_msg("Can't lseek '%s'", filename);
++                close(fd);
+                 continue;
+             }
+             lseek(fd, 0, SEEK_SET);
+ 
++    /* FIXME: what if the file is tens of gigabytes? */
+             char *data = xmalloc(size + 1);
+             ssize_t r = full_read(fd, data, size);
+             if (r < 0)
+@@ -374,7 +375,7 @@ int main(int argc, char **argv)
+             }
+             close(fd);
+ 
+-            rhbz_attachment(client, filename, ticket_no, data, /*flags*/ 0);
++            rhbz_attachment(client, filename, ticket_no, data, r, /*flags*/ 0);
+             free(data);
+         }
+ 
+diff --git a/src/plugins/rhbz.c b/src/plugins/rhbz.c
+index 5b53465..e086042 100644
+--- a/src/plugins/rhbz.c
++++ b/src/plugins/rhbz.c
+@@ -381,9 +381,9 @@ int rhbz_new_bug(struct abrt_xmlrpc *ax, problem_data_t *problem_data,
+ 
+ /* suppress mail notify by {s:i} (nomail:1) (driven by flag) */
+ int rhbz_attachment(struct abrt_xmlrpc *ax, const char *filename,
+-                    const char *bug_id, const char *data, int flags)
++                    const char *bug_id, const char *data, int data_len, int flags)
+ {
+-    char *encoded64 = encode_base64(data, strlen(data));
++    char *encoded64 = encode_base64(data, data_len);
+     char *fn = xasprintf("File: %s", filename);
+     xmlrpc_value* result;
+     int nomail_notify = IS_NOMAIL_NOTIFY(flags);
+@@ -416,15 +416,19 @@ int rhbz_attachments(struct abrt_xmlrpc *ax, const char *bug_id,
+     g_hash_table_iter_init(&iter, problem_data);
+     while (g_hash_table_iter_next(&iter, (void**)&name, (void**)&value))
+     {
+-        const char *content = value->content;
+-
+-        // We were special-casing FILENAME_BACKTRACE here, but karel says
+-        // he can retrieve it in inlined form from comments too.
+-        if ((value->flags & CD_FLAG_TXT)
+-         && (strlen(content) > CD_TEXT_ATT_SIZE /*|| (strcmp(name, FILENAME_BACKTRACE) == 0)*/)
+-        ) {
+-            /* check if the attachment failed and try it once more  */
+-            rhbz_attachment(ax, name, bug_id, content, flags);
++        if (value->flags & CD_FLAG_TXT)
++        {
++            const char *content = value->content;
++            unsigned len = strlen(content);
++            // We were special-casing FILENAME_BACKTRACE here, but karel says
++            // he can retrieve it in inlined form from comments too.
++            if (len > CD_TEXT_ATT_SIZE /*|| (strcmp(name, FILENAME_BACKTRACE) == 0)*/)
++            {
++                /* This text item wasn't added in comments, it is too big
++                 * for that. Attach it as a file.
++                 */
++                rhbz_attachment(ax, name, bug_id, content, len, flags);
++            }
+         }
+     }
+ 
+diff --git a/src/plugins/rhbz.h b/src/plugins/rhbz.h
+index 6a12c68..29908b6 100644
+--- a/src/plugins/rhbz.h
++++ b/src/plugins/rhbz.h
+@@ -86,7 +86,7 @@ int rhbz_attachments(struct abrt_xmlrpc *ax, const char *bug_id,
+                      problem_data_t *problem_data, int flags);
+ 
+ int rhbz_attachment(struct abrt_xmlrpc *ax, const char *filename,
+-                    const char *bug_id, const char *data, int flags);
++                    const char *bug_id, const char *data, int data_len, int flags);
+ 
+ GList *rhbz_bug_cc(xmlrpc_value *result_xml);
+ 
+-- 
+1.7.6.1
+

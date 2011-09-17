@@ -1,0 +1,32 @@
+From e4cc4a2a0dfdf644613861e6bd922152a67bf3b8 Mon Sep 17 00:00:00 2001
+From: Denys Vlasenko <dvlasenk@redhat.com>
+Date: Tue, 19 Jul 2011 10:21:49 +0200
+Subject: [PATCH 03/12] Ignore files which seem to be editor backups. Closes
+ bz#707959
+
+Signed-off-by: Denys Vlasenko <dvlasenk@redhat.com>
+---
+ src/lib/problem_data.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/src/lib/problem_data.c b/src/lib/problem_data.c
+index fcaf8fa..0878b88 100644
+--- a/src/lib/problem_data.c
++++ b/src/lib/problem_data.c
+@@ -309,6 +309,13 @@ void load_problem_data_from_dump_dir(problem_data_t *problem_data, struct dump_d
+             goto next;
+         }
+ 
++        if (short_name[0] == '#'
++         || (short_name[0] && short_name[strlen(short_name) - 1] == '~')
++        ) {
++            //log("Excluded (editor backup file):'%s'", short_name);
++            goto next;
++        }
++
+         ssize_t sz = 4*1024;
+         char *text = NULL;
+         bool editable = is_editable_file(short_name);
+-- 
+1.7.6
+

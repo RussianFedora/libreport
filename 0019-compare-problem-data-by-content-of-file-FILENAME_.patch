@@ -1,0 +1,57 @@
+From 6b208e8762e2ec07ed4ad2fb5a80a4acf53a005a Mon Sep 17 00:00:00 2001
+From: Nikola Pajkovsky <npajkovs@redhat.com>
+Date: Wed, 27 Jul 2011 16:10:56 +0200
+Subject: [PATCH 19/52] compare problem data by content of file (FILENAME_*)
+
+Signed-off-by: Nikola Pajkovsky <npajkovs@redhat.com>
+---
+ src/include/internal_libreport.h |    4 ++++
+ src/lib/problem_data.c           |   20 ++++++++++++++++++++
+ 2 files changed, 24 insertions(+), 0 deletions(-)
+
+diff --git a/src/include/internal_libreport.h b/src/include/internal_libreport.h
+index 1959d40..6538edb 100644
+--- a/src/include/internal_libreport.h
++++ b/src/include/internal_libreport.h
+@@ -637,6 +637,10 @@ GList *kernel_tainted_long(unsigned tainted);
+ 
+ // Not stored as files, added "on the fly":
+ #define CD_DUMPDIR            "Directory"
++
++#define cmp_problem_data libreport_cmp_problem_data
++gint cmp_problem_data(gconstpointer a, gconstpointer b, gpointer filename);
++
+ //UNUSED:
+ //// "Which events are possible (make sense) on this dump dir?"
+ //// (a string with "\n" terminated event names)
+diff --git a/src/lib/problem_data.c b/src/lib/problem_data.c
+index 0878b88..cee9527 100644
+--- a/src/lib/problem_data.c
++++ b/src/lib/problem_data.c
+@@ -459,3 +459,23 @@ void log_problem_data(problem_data_t *problem_data, const char *pfx)
+         );
+     }
+ }
++
++gint cmp_problem_data(gconstpointer a, gconstpointer b, gpointer filename)
++{
++    problem_data_t *a_data = (problem_data_t *) a;
++    const char *a_time_str = get_problem_item_content_or_NULL(a_data, filename);
++    unsigned long a_time= strtoul(a_time_str, NULL, 10);
++
++    problem_data_t *b_data = (problem_data_t *) b;
++    const char *b_time_str = get_problem_item_content_or_NULL(b_data, filename);
++    unsigned long b_time= strtoul(b_time_str, NULL, 10);
++
++    /* newer first */
++    if (a_time > b_time)
++        return -1;
++
++    if (a_time == b_time)
++        return 0;
++
++    return 1;
++}
+-- 
+1.7.6
+

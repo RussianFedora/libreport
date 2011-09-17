@@ -1,0 +1,21 @@
+diff --git a/src/report-python/__init__.py b/src/report-python/__init__.py
+index fbbc158..16d4759 100644
+--- a/src/report-python/__init__.py
++++ b/src/report-python/__init__.py
+@@ -162,8 +162,14 @@ def createPythonUnhandledExceptionSignature(component, hashmarkername, hashvalue
+         pd.add("os_release", product +" release "+ version)
+     pd.add_basics() # adds product and version + some other required field
+     # FIXME: how to handle files out of dump dir??
+-    #1 = flag BIN
+-    pd.add("pythonUnhandledException", exnFileName, 1)
++    # temporary glue
++    if (exnFileName):
++        try:
++            inf = open(exnFileName, "r")
++            pd.add(exnFileName[exnFileName.rfind('/')+1:], inf.read())
++            inf.close()
++        except Exception, ex:
++            print "Can't add %s to report: %s" % (exnFileName, ex)
+ 
+     return pd
+ 

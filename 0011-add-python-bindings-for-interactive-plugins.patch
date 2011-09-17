@@ -1,0 +1,268 @@
+From 02e0e56b5903f5f0e905f20be8413914ab6aa529 Mon Sep 17 00:00:00 2001
+From: Michal Toman <mtoman@redhat.com>
+Date: Thu, 21 Jul 2011 14:25:32 +0200
+Subject: [PATCH 11/12] add python bindings for interactive plugins
+
+---
+ configure.ac                     |    1 +
+ src/Makefile.am                  |    2 +-
+ src/client-python/Makefile.am    |   29 +++++++++++++
+ src/client-python/__init__.py    |   15 +++++++
+ src/client-python/client.c       |   83 ++++++++++++++++++++++++++++++++++++++
+ src/client-python/clientmodule.c |   42 +++++++++++++++++++
+ src/client-python/common.h       |   27 ++++++++++++
+ 8 files changed, 199 insertions(+), 1 deletions(-)
+ create mode 100644 src/client-python/Makefile.am
+ create mode 100644 src/client-python/__init__.py
+ create mode 100644 src/client-python/client.c
+ create mode 100644 src/client-python/clientmodule.c
+ create mode 100644 src/client-python/common.h
+
+diff --git a/configure.ac b/configure.ac
+index 61f16ae..4b01af6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -126,6 +126,7 @@ AC_CONFIG_FILES([
+ 	src/cli/Makefile
+ 	src/report-newt/Makefile
+ 	src/plugins/Makefile
++	src/client-python/Makefile
+ 	po/Makefile.in
+ ])
+ 
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 24dfeb2..3a6da3f 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -1 +1 @@
+-SUBDIRS = include lib plugins report-python gtk-helpers gui-wizard-gtk cli report-newt
++SUBDIRS = include lib plugins report-python gtk-helpers gui-wizard-gtk cli report-newt client-python
+diff --git a/src/client-python/Makefile.am b/src/client-python/Makefile.am
+new file mode 100644
+index 0000000..5a2a58f
+--- /dev/null
++++ b/src/client-python/Makefile.am
+@@ -0,0 +1,29 @@
++clientexecdir = $(pyexecdir)/reportclient
++
++clientexec_PYTHON = \
++    __init__.py
++
++clientexec_LTLIBRARIES = _reportclient.la
++
++_reportclient_la_SOURCES = \
++    clientmodule.c \
++    client.c \
++    common.h
++_reportclient_la_CPPFLAGS = \
++    -I$(srcdir)/../include/report -I$(srcdir)/../include \
++    -DDEBUG_DUMPS_DIR=\"$(DEBUG_DUMPS_DIR)\" \
++    -DPLUGINS_LIB_DIR=\"$(PLUGINS_LIB_DIR)\" \
++    -DPLUGINS_CONF_DIR=\"$(PLUGINS_CONF_DIR)\" \
++    -DLOCALSTATEDIR='"$(localstatedir)"' \
++    -DCONF_DIR=\"$(CONF_DIR)\" \
++    -DVAR_RUN=\"$(VAR_RUN)\" \
++    $(GLIB_CFLAGS) \
++    $(PYTHON_CFLAGS) \
++    -D_GNU_SOURCE \
++    -Wall -Wwrite-strings -Werror
++_reportclient_la_LDFLAGS = \
++    -module \
++    -avoid-version \
++    -export-symbols-regex init_reportclient
++_reportclient_la_LIBADD = \
++    ../lib/libreport.la
+diff --git a/src/client-python/__init__.py b/src/client-python/__init__.py
+new file mode 100644
+index 0000000..6114b5a
+--- /dev/null
++++ b/src/client-python/__init__.py
+@@ -0,0 +1,15 @@
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++from _reportclient import *
+diff --git a/src/client-python/client.c b/src/client-python/client.c
+new file mode 100644
+index 0000000..7177ae3
+--- /dev/null
++++ b/src/client-python/client.c
+@@ -0,0 +1,83 @@
++/*
++    Copyright (C) 2010  Abrt team.
++    Copyright (C) 2010  RedHat inc.
++
++    This program is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 2 of the License, or
++    (at your option) any later version.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License along
++    with this program; if not, write to the Free Software Foundation, Inc.,
++    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++*/
++#include <Python.h>
++
++#include "common.h"
++
++/* C: void alert(const char *message); */
++PyObject *p_alert(PyObject *pself, PyObject *args)
++{
++    const char *message;
++    if (!PyArg_ParseTuple(args, "s", &message))
++    {
++        return NULL;
++    }
++    alert(message);
++    Py_RETURN_NONE;
++}
++
++/* C: char *ask(const char *question, char *response, int response_len); */
++PyObject *p_ask(PyObject *pself, PyObject *args)
++{
++    const char *question;
++    if (!PyArg_ParseTuple(args, "s", &question))
++    {
++        return NULL;
++    }
++
++    char response[256];
++    if (!ask(question, response, sizeof(response)))
++    {
++        Py_RETURN_NONE;
++    }
++
++    return Py_BuildValue("s", response);
++}
++
++/* C: char *ask_password(const char *question, char *response, int response_len); */
++PyObject *p_ask_password(PyObject *pself, PyObject *args)
++{
++    const char *question;
++    if (!PyArg_ParseTuple(args, "s", &question))
++    {
++        return NULL;
++    }
++
++    char response[256];
++    if (!ask_password(question, response, sizeof(response)))
++    {
++        Py_RETURN_NONE;
++    }
++
++    return Py_BuildValue("s", response);
++}
++
++/* C: int ask_yes_no(const char *question); */
++PyObject *p_ask_yes_no(PyObject *pself, PyObject *args)
++{
++    const char *question;
++    if (!PyArg_ParseTuple(args, "s", &question))
++    {
++        return NULL;
++    }
++
++    int response = ask_yes_no(question);
++
++    return Py_BuildValue("i", response);
++}
+diff --git a/src/client-python/clientmodule.c b/src/client-python/clientmodule.c
+new file mode 100644
+index 0000000..e4584dd
+--- /dev/null
++++ b/src/client-python/clientmodule.c
+@@ -0,0 +1,42 @@
++/*
++    Copyright (C) 2010  Abrt team.
++    Copyright (C) 2010  RedHat inc.
++
++    This program is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 2 of the License, or
++    (at your option) any later version.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License along
++    with this program; if not, write to the Free Software Foundation, Inc.,
++    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++*/
++#include <Python.h>
++
++#include "common.h"
++
++static PyMethodDef module_methods[] = {
++    /* method_name, func, flags, doc_string */
++    /* for include/client.h */
++    { "alert"                     , p_alert                   , METH_VARARGS },
++    { "ask"                       , p_ask                     , METH_VARARGS },
++    { "ask_password"              , p_ask_password            , METH_VARARGS },
++    { "ask_yes_no"                , p_ask_yes_no              , METH_VARARGS },
++    { NULL }
++};
++
++#ifndef PyMODINIT_FUNC /* declarations for DLL import/export */
++#define PyMODINIT_FUNC void
++#endif
++PyMODINIT_FUNC
++init_reportclient(void)
++{
++    PyObject *m = Py_InitModule("_reportclient", module_methods);
++    if (!m)
++        printf("m == NULL\n");
++}
+diff --git a/src/client-python/common.h b/src/client-python/common.h
+new file mode 100644
+index 0000000..02f685f
+--- /dev/null
++++ b/src/client-python/common.h
+@@ -0,0 +1,27 @@
++/*
++    Copyright (C) 2009  Abrt team.
++    Copyright (C) 2009  RedHat inc.
++
++    This program is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 2 of the License, or
++    (at your option) any later version.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License along
++    with this program; if not, write to the Free Software Foundation, Inc.,
++    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++*/
++#include <Python.h>
++
++#include "client.h"
++/* module-level functions */
++/* for include/client.h */
++PyObject *p_alert(PyObject *pself, PyObject *args);
++PyObject *p_ask(PyObject *pself, PyObject *args);
++PyObject *p_ask_password(PyObject *pself, PyObject *args);
++PyObject *p_ask_yes_no(PyObject *pself, PyObject *args);
+-- 
+1.7.6
+

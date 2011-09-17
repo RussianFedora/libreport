@@ -1,0 +1,27 @@
+From 45d1a979104b4e34426e02330eb151e2537b1ec3 Mon Sep 17 00:00:00 2001
+From: Denys Vlasenko <dvlasenk@redhat.com>
+Date: Thu, 11 Aug 2011 17:23:20 +0200
+Subject: [PATCH 44/52] reporter-rhtsupport: fix product name reported to
+ server
+
+Signed-off-by: Denys Vlasenko <dvlasenk@redhat.com>
+---
+ src/plugins/rhbz.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/src/plugins/rhbz.c b/src/plugins/rhbz.c
+index 5b53465..7802dcd 100644
+--- a/src/plugins/rhbz.c
++++ b/src/plugins/rhbz.c
+@@ -334,7 +334,7 @@ int rhbz_new_bug(struct abrt_xmlrpc *ax, problem_data_t *problem_data,
+ 
+     char *product = NULL;
+     char *version = NULL;
+-    parse_release_for_bz(release, &product, &version);
++    parse_release_for_rhts(release, &product, &version);
+ 
+     xmlrpc_value* result = NULL;
+     char *summary = strbuf_free_nobuf(buf_summary);
+-- 
+1.7.6
+

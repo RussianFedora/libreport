@@ -1,0 +1,63 @@
+From 4bcab27c3aec24b7df68996155dc32b4de7a93d1 Mon Sep 17 00:00:00 2001
+From: Jiri Moskovcak <jmoskovc@redhat.com>
+Date: Fri, 22 Jul 2011 23:13:53 +0200
+Subject: [PATCH 25/26] added minimal-rating entry to all event xml files
+
+---
+ src/plugins/report_Kerneloops.xml.in |    1 +
+ src/plugins/report_Logger.xml.in     |    1 +
+ src/plugins/report_Mailx.xml.in      |    1 +
+ src/plugins/report_RHTSupport.xml.in |    1 +
+ 4 files changed, 4 insertions(+), 0 deletions(-)
+
+diff --git a/src/plugins/report_Kerneloops.xml.in b/src/plugins/report_Kerneloops.xml.in
+index a4da6b6..e8d6f1a 100644
+--- a/src/plugins/report_Kerneloops.xml.in
++++ b/src/plugins/report_Kerneloops.xml.in
+@@ -8,6 +8,7 @@
+     <exclude-items-always>*</exclude-items-always>
+     <exclude-binary-items>yes</exclude-binary-items>
+     <include-items-by-default></include-items-by-default>
++    <minimal-rating>0</minimal-rating>
+ 
+     <options>
+         <option type="text" name="KerneloopsReporter_SubmitURL">
+diff --git a/src/plugins/report_Logger.xml.in b/src/plugins/report_Logger.xml.in
+index f7230e0..f37a47f 100644
+--- a/src/plugins/report_Logger.xml.in
++++ b/src/plugins/report_Logger.xml.in
+@@ -8,6 +8,7 @@
+     <exclude-items-always></exclude-items-always>
+     <exclude-binary-items>no</exclude-binary-items>
+     <include-items-by-default></include-items-by-default>
++    <minimal-rating>0</minimal-rating>
+ 
+     <options>
+         <option type="text" name="Logger_Log_File">
+diff --git a/src/plugins/report_Mailx.xml.in b/src/plugins/report_Mailx.xml.in
+index 2476a3d..f9a7458 100644
+--- a/src/plugins/report_Mailx.xml.in
++++ b/src/plugins/report_Mailx.xml.in
+@@ -8,6 +8,7 @@
+     <exclude-items-always></exclude-items-always>
+     <exclude-binary-items>no</exclude-binary-items>
+     <include-items-by-default></include-items-by-default>
++    <minimal-rating>0</minimal-rating>
+ 
+     <options>
+         <option type="text" name="Mailx_Subject">
+diff --git a/src/plugins/report_RHTSupport.xml.in b/src/plugins/report_RHTSupport.xml.in
+index 834528a..3009d64 100644
+--- a/src/plugins/report_RHTSupport.xml.in
++++ b/src/plugins/report_RHTSupport.xml.in
+@@ -8,6 +8,7 @@
+     <exclude-items-always></exclude-items-always>
+     <exclude-binary-items>no</exclude-binary-items>
+     <include-items-by-default></include-items-by-default>
++    <minimal-rating>0</minimal-rating>
+ 
+     <options>
+         <option type="text" name="RHTSupport_URL">
+-- 
+1.7.6
+

@@ -1,0 +1,31 @@
+From 153c540b9a6d7d09f6d570a0e65fd4f328e9a3b2 Mon Sep 17 00:00:00 2001
+From: Nikola Pajkovsky <npajkovs@redhat.com>
+Date: Tue, 2 Aug 2011 11:26:10 +0200
+Subject: [PATCH 21/52] fix wrong casting
+
+Signed-off-by: Nikola Pajkovsky <npajkovs@redhat.com>
+---
+ src/lib/problem_data.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/lib/problem_data.c b/src/lib/problem_data.c
+index cee9527..7ff1d59 100644
+--- a/src/lib/problem_data.c
++++ b/src/lib/problem_data.c
+@@ -462,11 +462,11 @@ void log_problem_data(problem_data_t *problem_data, const char *pfx)
+ 
+ gint cmp_problem_data(gconstpointer a, gconstpointer b, gpointer filename)
+ {
+-    problem_data_t *a_data = (problem_data_t *) a;
++    problem_data_t *a_data = *(problem_data_t **) a;
+     const char *a_time_str = get_problem_item_content_or_NULL(a_data, filename);
+     unsigned long a_time= strtoul(a_time_str, NULL, 10);
+ 
+-    problem_data_t *b_data = (problem_data_t *) b;
++    problem_data_t *b_data = *(problem_data_t **) b;
+     const char *b_time_str = get_problem_item_content_or_NULL(b_data, filename);
+     unsigned long b_time= strtoul(b_time_str, NULL, 10);
+ 
+-- 
+1.7.6
+

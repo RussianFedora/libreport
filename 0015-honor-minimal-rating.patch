@@ -1,0 +1,139 @@
+From 4625b41eb61eb32dd5ddfd59f0b1e6c4e0c351b7 Mon Sep 17 00:00:00 2001
+From: Nikola Pajkovsky <npajkovs@redhat.com>
+Date: Fri, 22 Jul 2011 13:57:10 +0200
+Subject: [PATCH 15/26] honor minimal rating
+
+Signed-off-by: Nikola Pajkovsky <npajkovs@redhat.com>
+---
+ src/cli/cli-report.c        |   10 ++++------
+ src/gui-wizard-gtk/wizard.c |   33 ++++++++++++++++++++++++---------
+ src/include/event_config.h  |    1 +
+ src/lib/event_xml_parser.c  |   13 +++++++++++++
+ 4 files changed, 42 insertions(+), 15 deletions(-)
+
+diff --git a/src/cli/cli-report.c b/src/cli/cli-report.c
+index 6ec7f96..f203fad 100644
+--- a/src/cli/cli-report.c
++++ b/src/cli/cli-report.c
+@@ -752,7 +752,9 @@ int report(const char *dump_dir_name, int flags)
+     {
+         const char *rating_str = get_problem_item_content_or_NULL(problem_data, FILENAME_RATING);
+ //COMPAT, remove after 2.1 release
+-        if (!rating_str) rating_str = get_problem_item_content_or_NULL(problem_data, "rating");
++        if (!rating_str)
++            rating_str = get_problem_item_content_or_NULL(problem_data, "rating");
++
+         unsigned i, rating = rating_str ? xatou(rating_str) : 4;
+         GList *li;
+         char wanted_reporters[255];
+@@ -781,11 +783,7 @@ int report(const char *dump_dir_name, int flags)
+             if (!is_number_in_string(i, wanted_reporters))
+                 continue;
+ 
+-            /* TODO: npajkovs; not implemented yet */
+-            //const char *rating_required = get_map_string_item_or_NULL(single_plugin_settings, "RatingRequired");
+-            //if (rating_required
+-            //    && string_to_bool(rating_required) == true
+-            if (rating < 3)
++            if (rating < config->ec_minimal_rating)
+             {
+                 puts(_("Reporting disabled because the backtrace is unusable"));
+ 
+diff --git a/src/gui-wizard-gtk/wizard.c b/src/gui-wizard-gtk/wizard.c
+index 7c06beb..606d799 100644
+--- a/src/gui-wizard-gtk/wizard.c
++++ b/src/gui-wizard-gtk/wizard.c
+@@ -1455,23 +1455,38 @@ static void check_bt_rating_and_allow_send(void)
+ //FIXME: say "no" to special casing!
+     if (analyzer && strcmp(analyzer, "Kerneloops") != 0)
+     {
+-        const char *rating = get_problem_item_content_or_NULL(g_cd, FILENAME_RATING);
++        const char *rating_str = get_problem_item_content_or_NULL(g_cd, FILENAME_RATING);
+ //COMPAT, remove after 2.1 release
+-        if (!rating) rating= get_problem_item_content_or_NULL(g_cd, "rating");
+-        if (rating) switch (*rating)
++        if (!rating_str)
++            rating_str = get_problem_item_content_or_NULL(g_cd, "rating");
++
++        if (rating_str)
+         {
+-            case '4': /* bt is ok - no warning here */
+-                break;
+-            case '3': /* bt is usable, but not complete, so show a warning */
++            char *endptr;
++            errno = 0;
++            long rating = strtol(rating_str, &endptr, 10);
++            if (errno != 0 || endptr == rating_str || *endptr != '\0')
++            {
++                add_warning(_("Reporting disabled because the rating does not contain a number '%s'."));
++                send = false;
++                warn = true;
++            }
++
++            event_config_t *cfg = get_event_config(g_reporter_events_selected);
++
++            if (rating == cfg->ec_minimal_rating) /* bt is usable, but not complete, so show a warning */
++            {
+                 add_warning(_("The backtrace is incomplete, please make sure you provide the steps to reproduce."));
+                 warn = true;
+-                break;
+-            default:
++            }
++
++            if (rating < cfg->ec_minimal_rating)
++            {
+                 //FIXME: see CreporterAssistant: 394 for ideas
+                 add_warning(_("Reporting disabled because the backtrace is unusable."));
+                 send = false;
+                 warn = true;
+-                break;
++            }
+         }
+     }
+ 
+diff --git a/src/include/event_config.h b/src/include/event_config.h
+index 6f9383c..bd599f9 100644
+--- a/src/include/event_config.h
++++ b/src/include/event_config.h
+@@ -76,6 +76,7 @@ typedef struct
+     char *ec_include_items_by_default;
+     char *ec_exclude_items_always;
+     bool  ec_exclude_binary_items;
++    long  ec_minimal_rating;
+ 
+     GList *options;
+ } event_config_t;
+diff --git a/src/lib/event_xml_parser.c b/src/lib/event_xml_parser.c
+index 5b5fdd7..7604a17 100644
+--- a/src/lib/event_xml_parser.c
++++ b/src/lib/event_xml_parser.c
+@@ -30,6 +30,7 @@
+ //#define ACTION_ELEMENT        "action"
+ #define NAME_ELEMENT            "name"
+ #define DEFAULT_VALUE_ELEMENT   "default-value"
++#define MINIMAL_RATING_ELEMENT  "minimal-rating"
+ 
+ #define REQUIRES_ELEMENT        "requires-items"
+ #define EXCL_BY_DEFAULT_ELEMENT "exclude-items-by-default"
+@@ -400,6 +401,18 @@ static void text(GMarkupParseContext *context,
+             free(text_copy);
+             return;
+         }
++        if (strcmp(inner_element, MINIMAL_RATING_ELEMENT) == 0)
++        {
++            char *endptr;
++            errno = 0;
++            ui->ec_minimal_rating = strtol(text_copy, &endptr, 10);
++            if (errno != 0 || endptr == text_copy || *endptr != '\0')
++            {
++                log("invalid minimal-rating number '%s', set to default 4", text_copy);
++                ui->ec_minimal_rating = 4;
++            }
++            return;
++        }
+     }
+     free(text_copy);
+ }
+-- 
+1.7.6
+

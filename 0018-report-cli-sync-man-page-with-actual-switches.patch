@@ -1,0 +1,74 @@
+From 73f3e237baedb448778e6a56a06102df6deee921 Mon Sep 17 00:00:00 2001
+From: Martin Milata <mmilata@redhat.com>
+Date: Mon, 1 Aug 2011 15:14:14 +0200
+Subject: [PATCH 18/52] report-cli: sync man page with actual switches
+
+---
+ src/cli/report-cli.txt |   27 +++++++--------------------
+ 1 files changed, 7 insertions(+), 20 deletions(-)
+
+diff --git a/src/cli/report-cli.txt b/src/cli/report-cli.txt
+index 7ee1170..30bbfa2 100644
+--- a/src/cli/report-cli.txt
++++ b/src/cli/report-cli.txt
+@@ -7,19 +7,15 @@ report-cli - Work with ABRT dump directories from command line.
+ 
+ SYNOPSIS
+ --------
+-'report-cli' [-vsp] -l[f] [-D BASE_DIR]...
+-
+-'report-cli' [-vsp] -i[f] DUMP_DIR
+-
+ 'report-cli' [-vsp] -L[PREFIX] [DUMP_DIR]
+ 
+ 'report-cli' [-vsp] -e EVENT DUMP_DIR
+ 
+ 'report-cli' [-vsp] -a[y] DUMP_DIR
+ 
+-'report-cli' [-vsp] -r[y|o] DUMP_DIR
++'report-cli' [-vsp] -c[y] DUMP_DIR
+ 
+-'report-cli' [-vsp] -d DUMP_DIR
++'report-cli' [-vsp] -r[y|o|d] DUMP_DIR
+ 
+ DESCRIPTION
+ -----------
+@@ -29,15 +25,6 @@ It enables access to, manipulation of problem data, and reporting.
+ 
+ OPTIONS
+ -------
+--l::
+-    List not yet reported problems, or all problems with -f
+-
+--D BASE_DIR::
+-    Directory to list problems from (default: -D $HOME/.abrt/spool -D /var/spool/abrt)
+-
+--i, --info::
+-    Print information about DUMP_DIR (detailed with -f)
+-
+ -L[PREFIX]::
+     List possible events [which start with PREFIX]
+ 
+@@ -47,14 +34,14 @@ OPTIONS
+ -a, --analyze::
+     Run analyze event(s) on DUMP_DIR
+ 
++-c, --collect::
++    Run collect event(s) on DUMP_DIR
++
+ -r, --report::
+-    Analyze and report problem data in DUMP_DIR
++    Analyze, collect and report problem data in DUMP_DIR
+ 
+ -d, --delete::
+-    Remove DUMP_DIR
+-
+--f, --full::
+-    Full listing
++    Remove DUMP_DIR after reporting
+ 
+ -y, --always::
+     Noninteractive: don't ask questions, assume positive answer to all of them
+-- 
+1.7.6
+

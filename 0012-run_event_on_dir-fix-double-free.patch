@@ -1,0 +1,32 @@
+From 3ad62d790e546d18d6970e8b49f6f7e0d689c01d Mon Sep 17 00:00:00 2001
+From: Martin Milata <mmilata@redhat.com>
+Date: Thu, 21 Jul 2011 15:01:07 +0200
+Subject: [PATCH 12/12] run_event_on_dir: fix double free
+
+Run_event_on_dir freed the message buffer even if the logging callback
+took ownership (like do_log_and_save_line does). Fix that.
+---
+ src/lib/run_event.c |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/lib/run_event.c b/src/lib/run_event.c
+index ba9920c..77d2819 100644
+--- a/src/lib/run_event.c
++++ b/src/lib/run_event.c
+@@ -510,9 +510,11 @@ int run_event_on_dir_name(struct run_event_state *state,
+                 if (write(state->command_in_fd, buf, strlen(buf)) < 0)
+                     perror_msg_and_die("write");
+             }
+-            /* no special prefix -> forward to log if applicable */
++            /* no special prefix -> forward to log if applicable
++             * note that callback may take ownership of buf by returning NULL */
+             else if (state->logging_callback)
+-                msg = state->logging_callback(msg, state->logging_param);
++                buf = state->logging_callback(buf, state->logging_param);
++
+             free(buf);
+         }
+         fclose(fp); /* Got EOF, close. This also closes state->command_out_fd */
+-- 
+1.7.6
+

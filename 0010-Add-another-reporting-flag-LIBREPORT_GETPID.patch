@@ -1,0 +1,94 @@
+From 6a69e7ad5186709bd3dbaa8e843a1e16b39bb501 Mon Sep 17 00:00:00 2001
+From: Denys Vlasenko <dvlasenk@redhat.com>
+Date: Thu, 21 Jul 2011 09:51:57 +0200
+Subject: [PATCH 10/12] Add another reporting flag, LIBREPORT_GETPID.
+
+This flag means "return the pid of reporting process".
+
+IOW: LIBREPORT_NOWAIT will reparent reporter to init
+and return 0, LIBREPORT_NOWAIT | LIBREPORT_GETPID will not,
+and will return pid.
+
+Signed-off-by: Denys Vlasenko <dvlasenk@redhat.com>
+---
+ src/include/report.h             |    9 ++++++---
+ src/lib/report.c                 |   14 +++++++++++---
+ src/report-python/reportmodule.c |    1 +
+ 3 files changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/src/include/report.h b/src/include/report.h
+index 18bb20b..410a24d 100644
+--- a/src/include/report.h
++++ b/src/include/report.h
+@@ -28,10 +28,13 @@ extern "C" {
+ enum {
+     LIBREPORT_NOWAIT      = 0,
+     LIBREPORT_WAIT        = (1 << 0), /* wait for report to finish and reload the problem data */
+-    LIBREPORT_ANALYZE     = (1 << 1), /* run analyzers? */
++    LIBREPORT_GETPID      = (1 << 1), /* return pid of child. Use with LIBREPORT_NOWAIT. */
++                                      /* Note: without LIBREPORT_GETPID, child will be detached */
++                                      /* (reparented to init) */
++    LIBREPORT_ANALYZE     = (1 << 2), /* run analyzers? */
+                                       /* ("run reporters" is always on, has no flag (for now?)) */
+-    LIBREPORT_RELOAD_DATA = (1 << 3), /* reload problem data after run (needs WAIT) */
+-    LIBREPORT_DEL_DIR     = (1 << 4), /* delete directory after reporting */
++    LIBREPORT_RELOAD_DATA = (1 << 5), /* reload problem data after run (needs WAIT) */
++    LIBREPORT_DEL_DIR     = (1 << 6), /* delete directory after reporting */
+ };
+ 
+ int report_problem_in_dir(const char *dirname, int flags);
+diff --git a/src/lib/report.c b/src/lib/report.c
+index aaf5326..3c365ae 100644
+--- a/src/lib/report.c
++++ b/src/lib/report.c
+@@ -74,9 +74,10 @@ int report_problem_in_dir(const char *dirname, int flags)
+          */
+         signal(SIGCHLD, SIG_DFL);
+ 
+-        if (!(flags & LIBREPORT_WAIT))
++        if (!(flags & (LIBREPORT_WAIT | LIBREPORT_GETPID)))
+         {
+-            /* Caller doesn't want to wait for completion.
++            /* Caller doesn't want to wait for completion (!LIBREPORT_WAIT),
++             * and doesn't want to have pid returned (!LIBREPORT_GETPID).
+              * Create a grandchild, and then exit.
+              * This reparents grandchild to init, and makes waitpid
+              * in parent detect our exit and return almost immediately.
+@@ -120,6 +121,13 @@ int report_problem_in_dir(const char *dirname, int flags)
+     }
+ 
+     /* parent */
++    if (!(flags & LIBREPORT_WAIT) && (flags & LIBREPORT_GETPID))
++        return pid;
++
++    /* we are here either if LIBREPORT_WAIT (caller wants exitcode)
++     * or !LIBREPORT_GETPID (caller doesn't want to have a child).
++     * In both cases, we need to wait for child:
++     */
+     int status;
+     do
+         pid = waitpid(pid, &status, 0);
+@@ -150,7 +158,7 @@ int report_problem_in_memory(problem_data_t *pd, int flags)
+     dd_close(dd);
+     VERB2 log("Temp problem dir: '%s'", dir_name);
+ 
+-    if (!(flags & LIBREPORT_WAIT))
++    if (flags & LIBREPORT_NOWAIT)
+         flags |= LIBREPORT_DEL_DIR;
+     result = report_problem_in_dir(dir_name, flags);
+ 
+diff --git a/src/report-python/reportmodule.c b/src/report-python/reportmodule.c
+index 3d802f9..b99ed49 100644
+--- a/src/report-python/reportmodule.c
++++ b/src/report-python/reportmodule.c
+@@ -90,6 +90,7 @@ init_pyreport(void)
+     /* for include/report/report.h */
+     PyModule_AddObject(m, "LIBREPORT_NOWAIT"     , Py_BuildValue("i", LIBREPORT_NOWAIT     ));
+     PyModule_AddObject(m, "LIBREPORT_WAIT"       , Py_BuildValue("i", LIBREPORT_WAIT       ));
++    PyModule_AddObject(m, "LIBREPORT_GETPID"     , Py_BuildValue("i", LIBREPORT_GETPID     ));
+     PyModule_AddObject(m, "LIBREPORT_ANALYZE"    , Py_BuildValue("i", LIBREPORT_ANALYZE    ));
+     PyModule_AddObject(m, "LIBREPORT_RELOAD_DATA", Py_BuildValue("i", LIBREPORT_RELOAD_DATA));
+     PyModule_AddObject(m, "LIBREPORT_DEL_DIR"    , Py_BuildValue("i", LIBREPORT_DEL_DIR    ));
+-- 
+1.7.6
+

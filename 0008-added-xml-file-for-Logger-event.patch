@@ -1,0 +1,84 @@
+From ddbdc3f2451e061f57b350379d2daecb65bcd7fc Mon Sep 17 00:00:00 2001
+From: Jiri Moskovcak <jmoskovc@redhat.com>
+Date: Wed, 20 Jul 2011 14:25:34 +0200
+Subject: [PATCH 08/12] added xml file for Logger event
+
+---
+ src/plugins/Makefile.am          |    2 ++
+ src/plugins/print_event.conf     |    2 +-
+ src/plugins/report_Logger.conf   |    4 ++--
+ src/plugins/report_Logger.xml.in |   25 +++++++++++++++++++++++++
+ 5 files changed, 31 insertions(+), 3 deletions(-)
+ create mode 100644 src/plugins/report_Logger.xml.in
+
+diff --git a/src/plugins/Makefile.am b/src/plugins/Makefile.am
+index 4435357..d616ee5 100644
+--- a/src/plugins/Makefile.am
++++ b/src/plugins/Makefile.am
+@@ -23,6 +23,7 @@ dist_events_DATA = \
+     report_Bugzilla.xml \
+     report_Bugzilla.conf \
+     report_Logger.conf \
++    report_Logger.xml \
+     report_Mailx.xml \
+     report_RHTSupport.xml \
+     report_Kerneloops.xml
+@@ -62,6 +63,7 @@ EXTRA_DIST = \
+     report_Bugzilla.xml.in \
+     report_Bugzilla.conf \
+     report_Logger.conf \
++    report_Logger.xml.in \
+     report_Mailx.xml.in \
+     report_RHTSupport.xml.in \
+     report_Kerneloops.xml.in
+diff --git a/src/plugins/print_event.conf b/src/plugins/print_event.conf
+index 7b94aba..6e6e38e 100644
+--- a/src/plugins/print_event.conf
++++ b/src/plugins/print_event.conf
+@@ -1,2 +1,2 @@
+ EVENT=report_Logger
+-        reporter-print -o "${Log_File:-/tmp/abrt.log}" -a "${Append:-no}" -r
++        reporter-print -o "${Logger_Log_File:-/tmp/abrt.log}" -a "${Logger_Append:-no}" -r
+diff --git a/src/plugins/report_Logger.conf b/src/plugins/report_Logger.conf
+index d885ce5..45f6b5d 100644
+--- a/src/plugins/report_Logger.conf
++++ b/src/plugins/report_Logger.conf
+@@ -1,2 +1,2 @@
+-Log_File=/tmp/abrt.log
+-Append=yes
++Logger_Log_File=/tmp/abrt.log
++Logger_Append=yes
+diff --git a/src/plugins/report_Logger.xml.in b/src/plugins/report_Logger.xml.in
+new file mode 100644
+index 0000000..f7230e0
+--- /dev/null
++++ b/src/plugins/report_Logger.xml.in
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="UTF-8" ?>
++<event>
++    <_name>Logger</_name>
++    <_description>Save the report locally</_description>
++
++    <requires-items></requires-items>
++    <exclude-items-by-default>coredump</exclude-items-by-default>
++    <exclude-items-always></exclude-items-always>
++    <exclude-binary-items>no</exclude-binary-items>
++    <include-items-by-default></include-items-by-default>
++
++    <options>
++        <option type="text" name="Logger_Log_File">
++            <_label>Log File</_label>
++            <allow-empty>no</allow-empty>
++            <_description>Name of the logfile</_description>
++            <default-value>/tmp/abrt.log</default-value>
++        </option>
++        <option type="bool" name="Logger_Append">
++            <_label>Append</_label>
++            <_description>Append new reports or overwrite the old one.</_description>
++            <default-value>yes</default-value>
++        </option>
++    </options>
++</event>
+-- 
+1.7.6
+

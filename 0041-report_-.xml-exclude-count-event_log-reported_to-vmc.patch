@@ -1,0 +1,73 @@
+From 6b34fccc918bf6ca48029a00a1ef30bbdbbb307b Mon Sep 17 00:00:00 2001
+From: Denys Vlasenko <dvlasenk@redhat.com>
+Date: Thu, 11 Aug 2011 16:26:24 +0200
+Subject: [PATCH 41/52] report_*.xml: exclude
+ count,event_log,reported_to,vmcore by default
+
+Signed-off-by: Denys Vlasenko <dvlasenk@redhat.com>
+---
+ src/plugins/report_Bugzilla.xml.in   |    2 +-
+ src/plugins/report_Logger.xml.in     |    6 +++---
+ src/plugins/report_Mailx.xml.in      |    2 +-
+ src/plugins/report_RHTSupport.xml.in |    2 +-
+ 4 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/plugins/report_Bugzilla.xml.in b/src/plugins/report_Bugzilla.xml.in
+index af648e4..c8bf107 100644
+--- a/src/plugins/report_Bugzilla.xml.in
++++ b/src/plugins/report_Bugzilla.xml.in
+@@ -4,7 +4,7 @@
+     <_description>Report to Bugzilla bug tracker</_description>
+ 
+     <requires-items>component,duphash,os_release</requires-items>
+-    <exclude-items-by-default>coredump,count,event_log,reported_to</exclude-items-by-default>
++    <exclude-items-by-default>coredump,count,event_log,reported_to,vmcore</exclude-items-by-default>
+     <exclude-items-always></exclude-items-always>
+     <exclude-binary-items>yes</exclude-binary-items>
+     <include-items-by-default></include-items-by-default>
+diff --git a/src/plugins/report_Logger.xml.in b/src/plugins/report_Logger.xml.in
+index f37a47f..a2027f9 100644
+--- a/src/plugins/report_Logger.xml.in
++++ b/src/plugins/report_Logger.xml.in
+@@ -4,9 +4,9 @@
+     <_description>Save the report locally</_description>
+ 
+     <requires-items></requires-items>
+-    <exclude-items-by-default>coredump</exclude-items-by-default>
+-    <exclude-items-always></exclude-items-always>
+-    <exclude-binary-items>no</exclude-binary-items>
++    <exclude-items-by-default>count,event_log,reported_to</exclude-items-by-default>
++    <exclude-items-always>coredump,vmcore</exclude-items-always>
++    <exclude-binary-items>yes</exclude-binary-items>
+     <include-items-by-default></include-items-by-default>
+     <minimal-rating>0</minimal-rating>
+ 
+diff --git a/src/plugins/report_Mailx.xml.in b/src/plugins/report_Mailx.xml.in
+index f9a7458..5ecd244 100644
+--- a/src/plugins/report_Mailx.xml.in
++++ b/src/plugins/report_Mailx.xml.in
+@@ -4,7 +4,7 @@
+     <_description>Send via email</_description>
+ 
+     <requires-items></requires-items>
+-    <exclude-items-by-default>coredump</exclude-items-by-default>
++    <exclude-items-by-default>count,event_log,reported_to,coredump,vmcore</exclude-items-by-default>
+     <exclude-items-always></exclude-items-always>
+     <exclude-binary-items>no</exclude-binary-items>
+     <include-items-by-default></include-items-by-default>
+diff --git a/src/plugins/report_RHTSupport.xml.in b/src/plugins/report_RHTSupport.xml.in
+index 3009d64..d1993f0 100644
+--- a/src/plugins/report_RHTSupport.xml.in
++++ b/src/plugins/report_RHTSupport.xml.in
+@@ -4,7 +4,7 @@
+     <_description>Report to Red Hat support</_description>
+ 
+     <requires-items>package</requires-items>
+-    <exclude-items-by-default>event_log,reported_to</exclude-items-by-default>
++    <exclude-items-by-default>count,event_log,reported_to,vmcore</exclude-items-by-default>
+     <exclude-items-always></exclude-items-always>
+     <exclude-binary-items>no</exclude-binary-items>
+     <include-items-by-default></include-items-by-default>
+-- 
+1.7.6
+

@@ -1,0 +1,14 @@
+diff --git a/src/lib/parse_release.c b/src/lib/parse_release.c
+index 48e9eb6..9a4f69f 100644
+--- a/src/lib/parse_release.c
++++ b/src/lib/parse_release.c
+@@ -62,7 +62,8 @@ static void parse_release(const char *release, char** product, char** version, b
+     if (space)
+     {
+         space++;
+-        while (*space != '\0' && *space != ' ')
++        /* observed also: "Fedora F16-Alpha" rhbz#730887 */
++        while (isdigit(*space) || *space == '.')
+         {
+             /* Eat string like "5.2" */
+             strbuf_append_char(buf_version, *space);

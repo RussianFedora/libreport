@@ -1,0 +1,151 @@
+From 625a3500d1292068ce5f8cfc56253c4d6d6defea Mon Sep 17 00:00:00 2001
+From: Denys Vlasenko <dvlasenk@redhat.com>
+Date: Tue, 30 Aug 2011 14:05:40 +0200
+Subject: [PATCH 2/2] wizard: support shell glob patterns in .xml item
+ selectors
+
+We used to support "*" only. Example:
+
+    <requires-items>backtrace</requires-items>
+    <exclude-items-by-default/>
+    <exclude-items-always>*</exclude-items-always>
+    <exclude-binary-items>yes</exclude-binary-items>
+    <include-items-by-default/>
+    <minimal-rating>0</minimal-rating>
+
+The patch below adds support for patterns like *.txt, abc*
+As a consequence, special-casing code is removed.
+
+Signed-off-by: Denys Vlasenko <dvlasenk@redhat.com>
+---
+ src/gui-wizard-gtk/wizard.c          |   24 ++++++------------------
+ src/include/internal_libreport.h     |    2 ++
+ src/lib/is_in_comma_separated_list.c |   20 ++++++++++++++++++++
+ src/lib/problem_data.c               |    2 +-
+ 4 files changed, 29 insertions(+), 19 deletions(-)
+
+diff --git a/src/gui-wizard-gtk/wizard.c b/src/gui-wizard-gtk/wizard.c
+index a814278..c313bcb 100644
+--- a/src/gui-wizard-gtk/wizard.c
++++ b/src/gui-wizard-gtk/wizard.c
+@@ -1846,18 +1846,6 @@ static void on_page_prepare(GtkAssistant *assistant, GtkWidget *page, gpointer u
+             /* Based on selected reporter, update item checkboxes */
+             event_config_t *cfg = get_event_config(g_reporter_events_selected ? g_reporter_events_selected : "");
+             //log("%s: event:'%s', cfg:'%p'", __func__, g_reporter_events_selected, cfg);
+-            int allowed_by_reporter = 1;
+-            int default_by_reporter = 1;
+-            if (cfg)
+-            {
+-                /* Default settings are... */
+-                if (cfg->ec_exclude_items_always && strcmp(cfg->ec_exclude_items_always, "*") == 0)
+-                    allowed_by_reporter = 0;
+-                default_by_reporter = allowed_by_reporter;
+-                if (cfg->ec_exclude_items_by_default && strcmp(cfg->ec_exclude_items_by_default, "*") == 0)
+-                    default_by_reporter = 0;
+-            }
+-
+             GHashTableIter iter;
+             char *name;
+             struct problem_item *item;
+@@ -1865,28 +1853,28 @@ static void on_page_prepare(GtkAssistant *assistant, GtkWidget *page, gpointer u
+             while (g_hash_table_iter_next(&iter, (void**)&name, (void**)&item))
+             {
+                 /* Decide whether item is allowed, required, and what's the default */
+-                item->allowed_by_reporter = allowed_by_reporter;
++                item->allowed_by_reporter = 1;
+                 if (cfg)
+                 {
+-                    if (is_in_comma_separated_list(name, cfg->ec_exclude_items_always))
++                    if (is_in_comma_separated_list_of_glob_patterns(name, cfg->ec_exclude_items_always))
+                         item->allowed_by_reporter = 0;
+                     if ((item->flags & CD_FLAG_BIN) && cfg->ec_exclude_binary_items)
+                         item->allowed_by_reporter = 0;
+                 }
+ 
+-                item->default_by_reporter = item->allowed_by_reporter ? default_by_reporter : 0;
++                item->default_by_reporter = item->allowed_by_reporter;
+                 if (cfg)
+                 {
+-                    if (is_in_comma_separated_list(name, cfg->ec_exclude_items_by_default))
++                    if (is_in_comma_separated_list_of_glob_patterns(name, cfg->ec_exclude_items_by_default))
+                         item->default_by_reporter = 0;
+-                    if (is_in_comma_separated_list(name, cfg->ec_include_items_by_default))
++                    if (is_in_comma_separated_list_of_glob_patterns(name, cfg->ec_include_items_by_default))
+                         item->allowed_by_reporter = item->default_by_reporter = 1;
+                 }
+ 
+                 item->required_by_reporter = 0;
+                 if (cfg)
+                 {
+-                    if (is_in_comma_separated_list(name, cfg->ec_requires_items))
++                    if (is_in_comma_separated_list_of_glob_patterns(name, cfg->ec_requires_items))
+                         item->default_by_reporter = item->allowed_by_reporter = item->required_by_reporter = 1;
+                 }
+ 
+diff --git a/src/include/internal_libreport.h b/src/include/internal_libreport.h
+index 1fee5a3..afaf911 100644
+--- a/src/include/internal_libreport.h
++++ b/src/include/internal_libreport.h
+@@ -236,6 +236,8 @@ bool is_in_string_list(const char *name, char **v);
+ 
+ #define is_in_comma_separated_list libreport_is_in_comma_separated_list
+ bool is_in_comma_separated_list(const char *value, const char *list);
++#define is_in_comma_separated_list_of_glob_patterns libreport_is_in_comma_separated_list_of_glob_patterns
++bool is_in_comma_separated_list_of_glob_patterns(const char *value, const char *list);
+ 
+ /* Frees every element'd data using free(),
+  * then frees list itself using g_list_free(list):
+diff --git a/src/lib/is_in_comma_separated_list.c b/src/lib/is_in_comma_separated_list.c
+index 0afaf7b..6bec243 100644
+--- a/src/lib/is_in_comma_separated_list.c
++++ b/src/lib/is_in_comma_separated_list.c
+@@ -16,6 +16,7 @@
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
++#include <fnmatch.h>
+ #include "internal_libreport.h"
+ 
+ bool is_in_comma_separated_list(const char *value, const char *list)
+@@ -34,3 +35,22 @@ bool is_in_comma_separated_list(const char *value, const char *list)
+     }
+     return false;
+ }
++
++bool is_in_comma_separated_list_of_glob_patterns(const char *value, const char *list)
++{
++    if (!list)
++        return false;
++    while (*list)
++    {
++        const char *comma = strchrnul(list, ',');
++        char *pattern = xstrndup(list, comma - list);
++        int match = !fnmatch(pattern, value, /*flags:*/ 0);
++        free(pattern);
++        if (match)
++            return true;
++        if (!*comma)
++            break;
++        list = comma + 1;
++    }
++    return false;
++}
+diff --git a/src/lib/problem_data.c b/src/lib/problem_data.c
+index 7ff1d59..33227ed 100644
+--- a/src/lib/problem_data.c
++++ b/src/lib/problem_data.c
+@@ -433,10 +433,10 @@ static char **build_exclude_vector(const char *comma_separated_list)
+ 
+ problem_data_t *create_problem_data_for_reporting(const char *dump_dir_name)
+ {
+-    char **exclude_items = build_exclude_vector(getenv("EXCLUDE_FROM_REPORT"));
+     struct dump_dir *dd = dd_opendir(dump_dir_name, /*flags:*/ 0);
+     if (!dd)
+         return NULL; /* dd_opendir already emitted error msg */
++    char **exclude_items = build_exclude_vector(getenv("EXCLUDE_FROM_REPORT"));
+     problem_data_t *problem_data = new_problem_data();
+     load_problem_data_from_dump_dir(problem_data, dd, exclude_items);
+     dd_close(dd);
+-- 
+1.7.6.1
+

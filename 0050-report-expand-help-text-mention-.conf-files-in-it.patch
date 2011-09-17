@@ -1,0 +1,32 @@
+From f7318bef8263d86945c8d0f01eb06f2238929933 Mon Sep 17 00:00:00 2001
+From: Denys Vlasenko <dvlasenk@redhat.com>
+Date: Fri, 12 Aug 2011 13:15:22 +0200
+Subject: [PATCH 50/52] report: expand help text, mention .conf files in it
+
+Signed-off-by: Denys Vlasenko <dvlasenk@redhat.com>
+---
+ src/plugins/report.c |    8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
+
+diff --git a/src/plugins/report.c b/src/plugins/report.c
+index 2ba5448..b8356ef 100644
+--- a/src/plugins/report.c
++++ b/src/plugins/report.c
+@@ -33,7 +33,13 @@ int main(int argc, char **argv)
+         "\n"
+         "This tool is provided to ease transition of users of report package\n"
+         "to libreport. Recognized TARGETs are 'strata' and 'bugzilla',\n"
+-        "first one invokes upload to RHTSupport and second - to Bugzilla."
++        "first one invokes upload to RHTSupport and second - to Bugzilla.\n"
++        "\n"
++        "Configuration (such as login data) can be supplied via files\n"
++        CONF_DIR"/plugins/bugzilla.conf and\n"
++        CONF_DIR"/plugins/rhtsupport.conf,\n"
++        "or via environment variables - read documentation of\n"
++        "reporter-bugzilla and reporter-rhtsupport tools."
+     );
+     enum {
+         OPT_v = 1 << 0,
+-- 
+1.7.6
+

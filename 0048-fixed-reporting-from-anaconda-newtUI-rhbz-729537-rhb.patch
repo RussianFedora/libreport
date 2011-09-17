@@ -1,0 +1,111 @@
+From 7fae58d2396196bc72ee65b896db2d713ba75de9 Mon Sep 17 00:00:00 2001
+From: Jiri Moskovcak <jmoskovc@redhat.com>
+Date: Fri, 12 Aug 2011 11:23:30 +0200
+Subject: [PATCH 48/52] fixed reporting from anaconda newtUI rhbz#729537
+ rhbz#729566
+
+- tested with rhel anaconda
+- On Fedora tested only by tests/newt-meh-test.py
+---
+ src/include/report.h             |    1 +
+ src/lib/report.c                 |   16 +++++++++++++++-
+ src/report-python/__init__.py    |   16 ++++++++++++++--
+ src/report-python/io/NewtIO.py   |    1 +
+ src/report-python/reportmodule.c |    2 ++
+ 5 files changed, 33 insertions(+), 3 deletions(-)
+
+diff --git a/src/include/report.h b/src/include/report.h
+index ae879b5..d546d6b 100644
+--- a/src/include/report.h
++++ b/src/include/report.h
+@@ -36,6 +36,7 @@ enum {
+     LIBREPORT_RELOAD_DATA = (1 << 5), /* reload problem data after run (needs WAIT) */
+     LIBREPORT_DEL_DIR     = (1 << 6), /* delete directory after reporting */
+     LIBREPORT_RUN_CLI     = (1 << 7), /* run 'cli' instead of 'gui' */
++    LIBREPORT_RUN_NEWT    = (1 << 8), /* run 'report-newt' */
+ };
+ 
+ int report_problem_in_dir(const char *dirname, int flags);
+diff --git a/src/lib/report.c b/src/lib/report.c
+index 4b9f5c9..04ddbe4 100644
+--- a/src/lib/report.c
++++ b/src/lib/report.c
+@@ -48,7 +48,21 @@ int report_problem_in_dir(const char *dirname, int flags)
+         *pp++ = (char *)dirname;
+         *pp = NULL;
+ 
+-        if (!getenv("DISPLAY") || (flags & LIBREPORT_RUN_CLI))
++        if(flags & LIBREPORT_RUN_NEWT)
++        {
++            /* we want to run newt first */
++            path1 = BIN_DIR"/report-newt";
++            path2 = "report-newt";
++            pp = args;
++            *pp++ = (char *)"report-newt";
++            if (flags & LIBREPORT_DEL_DIR)
++                *pp++ = (char *)"--delete";
++            *pp++ = (char *)"-o"; /* report only, newt can't analyze */
++            *pp++ = (char *)"--";
++            *pp++ = (char *)dirname;
++            *pp = NULL;
++        }
++        else if(!getenv("DISPLAY") || (flags & LIBREPORT_RUN_CLI))
+         {
+             /* GUI won't work, use command line tool instead */
+             path1 = BIN_DIR"/report-cli";
+diff --git a/src/report-python/__init__.py b/src/report-python/__init__.py
+index 95941d7..7955878 100644
+--- a/src/report-python/__init__.py
++++ b/src/report-python/__init__.py
+@@ -13,7 +13,7 @@
+ # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ 
+ from _pyreport import *
+-
++from report.io import TextIO, GTKIO, NewtIO
+ 
+ #Compatibility with report package:
+ # Author(s): Gavin Romig-Koch <gavin@redhat.com>
+@@ -181,5 +181,17 @@ def report(cd, io_unused):
+     return r
+ """
+ 
+-def report(pd, io_unused):
++def report(pd, io):
++
++    flags = None
++    if isinstance(io, TextIO.TextIO):
++        flags = LIBREPORT_RUN_CLI
++    elif isinstance(io, NewtIO.NewtIO):
++        flags = LIBREPORT_WAIT  # wait for report to finish, so we can restore the screen
++        flags |= LIBREPORT_RUN_NEWT # run newt first
++        io.screen.suspend() # save the state of anaconda windows before we fork
++        result = report_problem_in_memory(pd, flags)
++        io.screen.resume() # restore the previously saved state
++        return result
++
+     result = report_problem(pd)
+diff --git a/src/report-python/io/NewtIO.py b/src/report-python/io/NewtIO.py
+index 6f9670d..12a23c9 100644
+--- a/src/report-python/io/NewtIO.py
++++ b/src/report-python/io/NewtIO.py
+@@ -18,4 +18,5 @@
+ 
+ class NewtIO:
+     def __init__(self, screen = None):
++        self.screen = screen
+         pass
+diff --git a/src/report-python/reportmodule.c b/src/report-python/reportmodule.c
+index b99ed49..5fdb786 100644
+--- a/src/report-python/reportmodule.c
++++ b/src/report-python/reportmodule.c
+@@ -94,4 +94,6 @@ init_pyreport(void)
+     PyModule_AddObject(m, "LIBREPORT_ANALYZE"    , Py_BuildValue("i", LIBREPORT_ANALYZE    ));
+     PyModule_AddObject(m, "LIBREPORT_RELOAD_DATA", Py_BuildValue("i", LIBREPORT_RELOAD_DATA));
+     PyModule_AddObject(m, "LIBREPORT_DEL_DIR"    , Py_BuildValue("i", LIBREPORT_DEL_DIR    ));
++    PyModule_AddObject(m, "LIBREPORT_RUN_CLI"    , Py_BuildValue("i", LIBREPORT_RUN_CLI    ));
++    PyModule_AddObject(m, "LIBREPORT_RUN_NEWT"   , Py_BuildValue("i", LIBREPORT_RUN_NEWT  ));
+ }
+-- 
+1.7.6
+
