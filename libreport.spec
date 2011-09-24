@@ -4,58 +4,12 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.5
-Release: 8%{?dist}.1.R
+Version: 2.0.5.980
+Release: 1%{?dist}.1.R
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
-Patch0: 0006-support-interactive-plugins-in-GUI-and-CLI.patch
-Patch1: 0007-wizard-if-more-than-one-reporter-is-chosen-select-al.patch
-Patch2: 0008-added-xml-file-for-Logger-event.patch
-Patch3: 0009-report-cli-don-t-crash-when-invalid-analyzer-is-sele.patch
-Patch4: 0011-add-python-bindings-for-interactive-plugins.patch
-Patch5: 0012-run_event_on_dir-fix-double-free.patch
-Patch6: 0015-honor-minimal-rating.patch
-Patch7: 0025-added-minimal-rating-entry-to-all-event-xml-files.patch
-Patch8: 0026-rhbz-724999-fix-null-in-summary.patch
-Patch10: 0001-fix-el6-keyring.patch
-Patch11: 0031-added-bugzilla_event.conf-to-enable-Bugzilla-for-all.patch
-Patch12: 0032-improved-compatibility-with-anaconda-rhbz-725857.patch
-Patch13: 0001-warn-silently-if-keyring-is-not-available-rhbz-72585.patch
-Patch14: 0002-don-t-reload-event-configuration-when-dump_dir-chang.patch
-Patch15: 0003-wizard-add-configure-event-button-to-wrong-settings-.patch
-Patch16: 0004-check-settings-only-for-last-selected-reporter.patch
-Patch17: fix_adding_external_files_to_report.patch
-Patch18: emptylines_interactive_di.patch
-Patch19: 0003-Ignore-files-which-seem-to-be-editor-backups.-Closes.patch
-Patch22: 0010-Add-another-reporting-flag-LIBREPORT_GETPID.patch
-Patch23: 0001-libreport-force-run-cli-event-if-DISPLAY-exist.patch
-Patch27: 0018-report-cli-sync-man-page-with-actual-switches.patch
-Patch28: 0019-compare-problem-data-by-content-of-file-FILENAME_.patch
-Patch29: 0021-fix-wrong-casting.patch
-Patch30: 0024-wizard-rename-Configure-Event-Preferences.patch
-Patch31: 0025-attach-file-to-bugzilla-ticket.patch
-Patch34: 0028-add-report-compat-tool.-Closes-315-bz-725660.patch
-Patch35: 0029-fixed-wrapping-in-comment-textview-rhbz-728132.patch
-Patch37: 0033-rename-plugins-Bugzilla.conf-plugins-bugzilla.conf.patch
-Patch39: 0035-dd_opendir-require-time-file-to-exist-even-in-read-o.patch
-Patch41: 0037-reporter-rhtsupport-do-not-hardcode-blacklisting.patch
-Patch42: 0038-report-newt-fix-help-text-option-o-is-mandatory.patch
-Patch43: 0039-report-newt-fit-reporting-window-to-standard-termina.patch
-Patch45: 0041-report_-.xml-exclude-count-event_log-reported_to-vmc.patch
-Patch46: 0042-added-xml-and-event-conf-for-uploader.patch
-Patch48: 0044-reporter-rhtsupport-fix-product-name-reported-to-ser.patch
-Patch50: 0046-uploader_event.conf-added-new-line-to-the-end-of-fil.patch
-Patch51: 0047-read-default-CONFFILE-if-no-c-option-is-given.patch
-Patch52: 0048-fixed-reporting-from-anaconda-newtUI-rhbz-729537-rhb.patch
-Patch54: 0050-report-expand-help-text-mention-.conf-files-in-it.patch
-Patch55: 0051-fix-make-check.patch
-Patch56: parse_release_bz.patch
-Patch57: libreport-fallback-textedit.patch
-Patch58: 0001-reporter-bugzilla-fix-file-attaching-was-using-strle.patch
-Patch59: 0002-wizard-support-shell-glob-patterns-in-.xml-item-sele.patch
-Patch60: 0001-reporter-bugzilla-add-b-to-make-it-possible-to-attac.patch
 Patch99: %{name}-2.0.5-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -209,6 +163,15 @@ Obsoletes: abrt-plugin-rhtsupport < 2.0.4
 %description plugin-rhtsupport
 Plugin to report bugs into RH support system.
 
+%package compat
+Summary: %{name}'s compat layer for obsoleted 'report' package
+Group: System Environment/Libraries
+Requires: %{name}-plugin-bugzilla
+Requires: %{name}-plugin-rhtsupport
+
+%description compat
+Provides 'report' command-line tool.
+
 %package plugin-reportuploader
 Summary: %{name}'s reportuploader plugin
 Group: System Environment/Libraries
@@ -228,52 +191,6 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
 %prep
 %setup -q
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
-%patch22 -p1
-%patch23 -p1
-%patch27 -p1
-%patch28 -p1
-%patch29 -p1
-%patch30 -p1
-%patch31 -p1
-%patch34 -p1
-%patch35 -p1
-%patch37 -p1
-%patch39 -p1
-%patch41 -p1
-%patch42 -p1
-%patch43 -p1
-%patch45 -p1
-%patch46 -p1
-%patch48 -p1
-%patch50 -p1
-%patch51 -p1
-%patch52 -p1
-%patch54 -p1
-%patch55 -p1
-%patch56 -p1
-%patch57 -p1
-%patch58 -p1
-%patch59 -p1
-%patch60 -p1
 %patch99 -p1
 
 %build
@@ -335,6 +252,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_libdir}/libabrt_web.so.*
 %exclude %{_libdir}/libabrt_web.so
 %{_bindir}/report
+%{_mandir}/man5/report_event.conf.5*
 
 %files devel
 %defattr(-,root,root,-)
@@ -405,18 +323,22 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_sysconfdir}/libreport/events/report_Bugzilla.xml
 %config(noreplace) %{_sysconfdir}/libreport/events/report_Bugzilla.conf
 %config(noreplace) %{_sysconfdir}/libreport/events.d/bugzilla_event.conf
-%config(noreplace) %{_sysconfdir}/libreport/events.d/bugzilla_event.conf
 # FIXME: remove with the old gui
 %{_mandir}/man1/reporter-bugzilla.1.gz
 %{_bindir}/reporter-bugzilla
 
 %files plugin-rhtsupport
 %defattr(-,root,root,-)
-#%config(noreplace) %{_sysconfdir}/libreport/plugins/rhtsupport.conf
+%config(noreplace) %{_sysconfdir}/libreport/plugins/rhtsupport.conf
 %{_sysconfdir}/libreport/events/report_RHTSupport.xml
 %config(noreplace) %{_sysconfdir}/libreport/events.d/rhtsupport_event.conf
-# {_mandir}/man7/abrt-RHTSupport.7.gz
+%{_mandir}/man1/reporter-rhtsupport.1.gz
 %{_bindir}/reporter-rhtsupport
+
+%files compat
+%defattr(-,root,root,-)
+%{_bindir}/report
+%{_mandir}/man1/report.1.gz
 
 %files plugin-reportuploader
 %defattr(-,root,root,-)
@@ -426,8 +348,15 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
-* Fri Sep 17 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.5-8.1.R
-- read fedora-release
+* Sat Sep 24 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.5.980-1.R
+- send Fedora instead of RFRemix to bugzilla.redhat.com
+
+* Thu Sep 22 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.5-9
+- don't allow sending reports with bad rating rhbz#672023
+- don't allow reporting without duphash rhbz#739182
+- tell users to fill out reports in English rhbz#734037
+- fixed config for kerneloops reporter rhbz#731189
+- Resolves: #672023 #739182 #734037 #731189
 
 * Fri Sep 09 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.5-8
 - allow bugzilla to send binary files
