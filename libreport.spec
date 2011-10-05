@@ -4,12 +4,16 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.5.980
+Version: 2.0.6
 Release: 1%{?dist}.1.R
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
+Patch0: 0001-report-newt-add-option-to-display-version-rhbz-74159.patch
+Patch1: 0002-free-the-string-not-the-strbuf.patch
+Patch2: 0003-reporter-mailx-set-sendwait-1-in-environment.patch
+Patch3: 0004-reporter-mailx-use-Bugzilla-s-output-format.-Closes-.patch
 Patch99: %{name}-2.0.5-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -191,6 +195,10 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
 %prep
 %setup -q
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
 %patch99 -p1
 
 %build
@@ -348,8 +356,17 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
-* Sat Sep 24 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.5.980-1.R
+* Wed Oct  5 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.6-1.1.R
 - send Fedora instead of RFRemix to bugzilla.redhat.com
+
+* Mon Oct 03 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.6-1
+- updated to the latest upstrem
+- just a bug fixing release
+
+* Mon Sep 26 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.5.982-1
+- re-fix rhbz#730887
+- re-fixed prgname (nice icons in gnome3) rhbz#741231
+- Resolves: #741231 #730887
 
 * Thu Sep 22 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.5-9
 - don't allow sending reports with bad rating rhbz#672023
