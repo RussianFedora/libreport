@@ -5,12 +5,13 @@
 Summary: Generic library for reporting various problems
 Name: libreport
 Version: 2.0.4
-Release: 3%{?dist}.1.R
+Release: 4%{?dist}.1.R
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
 Patch0: remove_pyreport.patch
+Patch1: 0001-refuse-reporting-when-not-reportable-file-exist.patch
 Patch99: %{name}-2.0.3-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -79,6 +80,7 @@ Development libraries and headers for libreport-gtk
 %prep
 %setup -q
 %patch0 -p1 -b remove_python
+%patch1 -p1
 %patch99 -p1 -b .read-fedora-release
 
 %build
@@ -168,6 +170,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_libdir}/pkgconfig/libreport-gtk.pc
 
 %changelog
+* Fri Oct 07 2011 Nikola Pajkovsky <npajkovs@redhat.com> 2.0.4-4.1.R
+- refuse reporting when not reportable file exist
+
 * Tue Jul 26 2011 Arkady L. Shane <ashejn@yandex-team.ru> 2.0.4-3.1.R
 - bump release
 
