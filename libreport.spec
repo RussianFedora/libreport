@@ -4,17 +4,12 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.6
-Release: 2%{?dist}.1.R
+Version: 2.0.7
+Release: 1%{?dist}.R
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
-Patch0: 0001-report-newt-add-option-to-display-version-rhbz-74159.patch
-Patch1: 0002-free-the-string-not-the-strbuf.patch
-Patch2: 0003-reporter-mailx-set-sendwait-1-in-environment.patch
-Patch3: 0004-reporter-mailx-use-Bugzilla-s-output-format.-Closes-.patch
-Patch4: 0001-refuse-reporting-when-not-reportable-file-exist.patch
 Patch99: %{name}-2.0.5-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -156,6 +151,18 @@ Obsoletes: report-plugin-bugzilla < 0.23-1
 Provides: report-config-bugzilla-redhat-com = 0.23-1
 Obsoletes: report-config-bugzilla-redhat-com < 0.23-1
 
+%if 0%{?fedora}
+%package plugin-bodhi
+Summary: %{name}'s bodhi plugin
+BuildRequires: json-c-devel
+Group: System Environment/Libraries
+Requires: %{name} = %{version}-%{release}
+Requires: PackageKit
+
+%description plugin-bodhi
+Search for a new updates in bodhi server
+%endif
+
 %description plugin-bugzilla
 Plugin to report bugs into the bugzilla.
 
@@ -196,11 +203,6 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
 %prep
 %setup -q
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
 %patch99 -p1
 
 %build
@@ -231,6 +233,9 @@ rm -f $RPM_BUILD_ROOT/%{_infodir}/dir
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%check
+make check
+
 %post gtk
 /sbin/ldconfig
 # update icon cache
@@ -256,12 +261,12 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %dir %{_sysconfdir}/%{name}/
 %dir %{_sysconfdir}/%{name}/events.d/
 %dir %{_sysconfdir}/%{name}/events/
+%dir %{_sysconfdir}/%{name}/plugins/
 %config(noreplace) %{_sysconfdir}/%{name}/report_event.conf
 %{_libdir}/libreport.so.*
 %{_libdir}/libabrt_dbus.so.*
 %{_libdir}/libabrt_web.so.*
 %exclude %{_libdir}/libabrt_web.so
-%{_bindir}/report
 %{_mandir}/man5/report_event.conf.5*
 
 %files devel
@@ -327,6 +332,14 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_mandir}/man*/reporter-mailx.*
 %{_bindir}/reporter-mailx
 
+%if 0%{?fedora}
+%files plugin-bodhi
+%defattr(-,root,root,-)
+%{_bindir}/abrt-bodhi
+%config(noreplace) %{_sysconfdir}/libreport/events.d/bodhi_event.conf
+%{_sysconfdir}/libreport/events/analyze_LocalGDB_Bodhi.xml
+%endif
+
 %files plugin-bugzilla
 %defattr(-,root,root,-)
 %config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla.conf
@@ -358,6 +371,21 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
+* Sat Nov  6 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.7-1.R
+- update to 2.0.7
+- added support for bodhi (preview)
+- dropped unused patches
+- reporter-bugzilla/rhts: add code to prevent duplicate reporting. Closes rhbz#727494 (dvlasenk@redhat.com)
+- wizard: search thru all items + tabbed details rhbz#748457 (jmoskovc@redhat.com)
+- wizard: add "I don't know what caused this problem" checkbox. Closes rhbz#712508 (dvlasenk@redhat.com)
+- reporter-bugzilla: add optional 'Product' parameter. Closes rhbz#665210 (dvlasenk@redhat.com)
+- rhbz#728190 - man pages contain suspicious version string (npajkovs@redhat.com)
+- reporter-print: expand leading ~/ if present. Closes rhbz#737991 (dvlasenk@redhat.com)
+- reporter-rhtsupport: ask rs/problems endpoint before creating new case. (working on rhbz#677052) (dvlasenk@redhat.com)
+- reporter-mailx: use Bugzilla's output format. Closes rhbz#717321. (dvlasenk@redhat.com)
+- report-newt: add option to display version (rhbz#741590) (mlichvar@redhat.com)
+- Resolves: #727494 #748457 #712508 #665210 rhbz#728190 #737991 #677052 #717321 #741590
+
 * Fri Oct 07 2011 Nikola Pajkovsky <npajkovs@redhat.com> 2.0.6-2.1.R
 - refuse reporting when not reportable file exist
 
