@@ -4,12 +4,21 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.7
-Release: 1%{?dist}.R
+Version: 2.0.8
+Release: 3%{?dist}.R
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
+Patch0: 0001-allow-to-specify-bodh-url-and-fix-one-NULL-dereferen.patch
+Patch1: 0002-if-better-backtrace-is-avail-then-upload-one.patch
+Patch2: 0003-search-only-by-duphash-for-selinux.patch
+Patch3: 0004-reorganize-comments-for-bugzilla-message-body-comes-.patch
+Patch4: 0005-do-not-insert-duplicate-comment-to-bugzilla.patch
+Patch5: 0006-if-OSRelease-environ-is-empty-load-OSRelease-from-pr.patch
+Patch6: 0009-bodhi-sync-enum-with-parse_opt.patch
+Patch7: 0010-inicializing-rpm-more-then-once-leads-to-sigsegv-in-.patch
+Patch8: 0011-url-takes-escaped-string.patch
 Patch99: %{name}-2.0.5-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -27,6 +36,8 @@ BuildRequires: texinfo
 BuildRequires: asciidoc
 BuildRequires: xmlto
 BuildRequires: newt-devel
+BuildRequires: libproxy-devel
+Requires: libreport-filesystem
 # required for update from old report library, otherwise we obsolete report-gtk
 # and all it's plugins, but don't provide the python bindings and the sealert
 # end-up with: can't import report.GtkIO
@@ -45,6 +56,13 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %description
 Libraries providing API for reporting different problems in applications
 to different bug targets like Bugzilla, ftp, trac, etc...
+
+%package filesystem
+Summary: Filesystem layout for libreport
+Group: Applications/File
+
+%description filesystem
+Filesystem layout for libreport
 
 %package devel
 Summary: Development libraries and headers for libreport
@@ -151,17 +169,16 @@ Obsoletes: report-plugin-bugzilla < 0.23-1
 Provides: report-config-bugzilla-redhat-com = 0.23-1
 Obsoletes: report-config-bugzilla-redhat-com < 0.23-1
 
-%if 0%{?fedora}
 %package plugin-bodhi
 Summary: %{name}'s bodhi plugin
 BuildRequires: json-c-devel
 Group: System Environment/Libraries
 Requires: %{name} = %{version}-%{release}
 Requires: PackageKit
+BuildRequires: rpm-devel
 
 %description plugin-bodhi
 Search for a new updates in bodhi server
-%endif
 
 %description plugin-bugzilla
 Plugin to report bugs into the bugzilla.
@@ -203,16 +220,21 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
 %prep
 %setup -q
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+
 %patch99 -p1
 
 %build
-mkdir -p m4
-test -r m4/aclocal.m4 || touch m4/aclocal.m4
 autoconf
-automake
 %configure
-sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
-sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 CFLAGS="-fno-strict-aliasing"
 make %{?_smp_mflags}
 
@@ -258,16 +280,19 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %files -f %{name}.lang
 %defattr(-,root,root,-)
 %doc README COPYING
-%dir %{_sysconfdir}/%{name}/
-%dir %{_sysconfdir}/%{name}/events.d/
-%dir %{_sysconfdir}/%{name}/events/
-%dir %{_sysconfdir}/%{name}/plugins/
 %config(noreplace) %{_sysconfdir}/%{name}/report_event.conf
 %{_libdir}/libreport.so.*
 %{_libdir}/libabrt_dbus.so.*
 %{_libdir}/libabrt_web.so.*
 %exclude %{_libdir}/libabrt_web.so
 %{_mandir}/man5/report_event.conf.5*
+
+%files filesystem
+%defattr(-,root,root,-)
+%dir %{_sysconfdir}/%{name}/
+%dir %{_sysconfdir}/%{name}/events.d/
+%dir %{_sysconfdir}/%{name}/events/
+%dir %{_sysconfdir}/%{name}/plugins/
 
 %files devel
 %defattr(-,root,root,-)
@@ -332,13 +357,10 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_mandir}/man*/reporter-mailx.*
 %{_bindir}/reporter-mailx
 
-%if 0%{?fedora}
 %files plugin-bodhi
 %defattr(-,root,root,-)
 %{_bindir}/abrt-bodhi
-%config(noreplace) %{_sysconfdir}/libreport/events.d/bodhi_event.conf
-%{_sysconfdir}/libreport/events/analyze_LocalGDB_Bodhi.xml
-%endif
+%{_mandir}/man1/abrt-bodhi.1.gz
 
 %files plugin-bugzilla
 %defattr(-,root,root,-)
@@ -371,8 +393,37 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
-* Sat Nov  6 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.7-1.R
-- update to 2.0.7
+* Sat Dec 19 2911 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.8-3.R
+- push Fedora instead of RFRemix to bugzilla.
+
+* Fri Dec 09 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.8-3
+- fixed few crashes in bodhi plugin
+
+* Thu Dec 08 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.8-2
+- fixed crash in bodhi plugin
+- re-upload better backtrace if available
+- fixed dupe finding for selinux
+- don't duplicate comments in bugzilla
+- fixed problem with empty release
+
+* Tue Dec 06 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.8-1
+- new version
+- added bodhi plugin rhbz#655783
+- one tab per file on details page rhbz#751833
+- search box search thru all data (should help with privacy) rhbz#748457
+- fixed close button position rhbz#741230
+- rise the attachment limit to 4kb rhbz#712602
+- fixed make check (rpath problem)
+- save chnages in editable lines rhbz#710100
+- ignore backup files rhbz#707959
+- added support for proxies rhbz#533652
+- Resolves: 753183 748457 737991 723219 712602 711986 692274 636000 631856 655783 741257 748457 741230 712602 753183 748457 741230 712602 710100 707959 533652
+
+* Sat Nov 05 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.7-2
+- bumped release
+
+* Fri Nov 04 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.7-1
+- new version
 - added support for bodhi (preview)
 - dropped unused patches
 - reporter-bugzilla/rhts: add code to prevent duplicate reporting. Closes rhbz#727494 (dvlasenk@redhat.com)
@@ -386,11 +437,8 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 - report-newt: add option to display version (rhbz#741590) (mlichvar@redhat.com)
 - Resolves: #727494 #748457 #712508 #665210 rhbz#728190 #737991 #677052 #717321 #741590
 
-* Fri Oct 07 2011 Nikola Pajkovsky <npajkovs@redhat.com> 2.0.6-2.1.R
+* Fri Oct 07 2011 Nikola Pajkovsky <npajkovs@redhat.com> 2.0.6-2
 - refuse reporting when not reportable file exist
-
-* Wed Oct  5 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.6-1.1.R
-- send Fedora instead of RFRemix to bugzilla.redhat.com
 
 * Mon Oct 03 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.6-1
 - updated to the latest upstrem

@@ -1,0 +1,29 @@
+From 0580662e90789a45f657b017fd0ae621d8ea4f6a Mon Sep 17 00:00:00 2001
+From: Nikola Pajkovsky <npajkovs@redhat.com>
+Date: Thu, 8 Dec 2011 17:15:02 +0100
+Subject: [PATCH 10/11] inicializing rpm more then once leads to sigsegv in
+ rpmReadConfigFiles
+
+Signed-off-by: Nikola Pajkovsky <npajkovs@redhat.com>
+---
+ src/plugins/abrt-bodhi.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+diff --git a/src/plugins/abrt-bodhi.c b/src/plugins/abrt-bodhi.c
+index 5416a0a..11c6d02 100644
+--- a/src/plugins/abrt-bodhi.c
++++ b/src/plugins/abrt-bodhi.c
+@@ -348,6 +348,10 @@ error:
+     rpmdbFreeIterator(iter);
+     rpmtsFree(ts);
+ 
++    rpmFreeRpmrc();
++    rpmFreeCrypto();
++    rpmFreeMacros(NULL);
++
+     return nvr;
+ }
+ 
+-- 
+1.7.7.3
+
