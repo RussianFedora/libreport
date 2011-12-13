@@ -393,7 +393,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
-* Sat Dec 19 2911 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.8-3.R
+* Sat Dec 19 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.8-3.R
 - push Fedora instead of RFRemix to bugzilla.
 
 * Fri Dec 09 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.8-3
