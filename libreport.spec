@@ -5,7 +5,7 @@
 Summary: Generic library for reporting various problems
 Name: libreport
 Version: 2.0.8
-Release: 3%{?dist}.R
+Release: 4%{?dist}.R
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
@@ -19,6 +19,8 @@ Patch5: 0006-if-OSRelease-environ-is-empty-load-OSRelease-from-pr.patch
 Patch6: 0009-bodhi-sync-enum-with-parse_opt.patch
 Patch7: 0010-inicializing-rpm-more-then-once-leads-to-sigsegv-in-.patch
 Patch8: 0011-url-takes-escaped-string.patch
+Patch9: 0001-rhbz-add-the-architecture-to-the-comment-only-if-it-.patch
+Patch10: 0001-rhbz-768647-python-doen-t-have-a-backtrace_rating-fi.patch
 Patch99: %{name}-2.0.5-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -229,6 +231,8 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
+%patch10 -p1
 
 %patch99 -p1
 
@@ -393,6 +397,10 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
+* Tue Dec 20 2011 Nikola Pajkovsky <npajkovs@redhat.com> 2.0.8-4.R
+- 768647 - [abrt] libreport-plugin-bugzilla-2.0.8-3.fc16: libreport_xatou:
+           Process /usr/bin/reporter-bugzilla was killed by signal 11 (SIGSEGV)
+
 * Sat Dec 19 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.8-3.R
 - push Fedora instead of RFRemix to bugzilla.
 

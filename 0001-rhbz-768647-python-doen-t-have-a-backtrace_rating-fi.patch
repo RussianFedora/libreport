@@ -1,0 +1,56 @@
+From e93f6cb75fe3ad7991deff0696538c93ee04cc7a Mon Sep 17 00:00:00 2001
+Message-Id: <e93f6cb75fe3ad7991deff0696538c93ee04cc7a.1324377641.git.npajkovs@redhat.com>
+From: Nikola Pajkovsky <npajkovs@redhat.com>
+Date: Mon, 19 Dec 2011 19:09:28 +0100
+Subject: [PATCH] rhbz#768647 - python doen't have a backtrace_rating file
+
+Signed-off-by: Nikola Pajkovsky <npajkovs@redhat.com>
+---
+ src/plugins/reporter-bugzilla.c |   10 ++++++++--
+ src/plugins/rhbz.c              |    2 +-
+ 2 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/src/plugins/reporter-bugzilla.c b/src/plugins/reporter-bugzilla.c
+index d27e804..4dd9ec2 100644
+--- a/src/plugins/reporter-bugzilla.c
++++ b/src/plugins/reporter-bugzilla.c
+@@ -392,7 +392,10 @@ int main(int argc, char **argv)
+ 
+             struct strbuf *full_desc = strbuf_new();
+             strbuf_append_strf(full_desc, "%s\n\n", comment);
+-            strbuf_append_strf(full_desc, "rating: %s\n", rating_str);
++
++            /* python doesn't have rating file */
++            if (rating_str)
++                strbuf_append_strf(full_desc, "%s: %s\n", FILENAME_RATING, rating_str);
+             strbuf_append_strf(full_desc, "Package: %s\n", package);
+             /* attach the architecture only if it's different from the initial report */
+             if ((strcmp(bz->bi_platform, "All") != 0) &&
+@@ -423,7 +426,10 @@ int main(int argc, char **argv)
+             }
+             strbuf_free(full_desc);
+ 
+-            unsigned rating = xatou(rating_str);
++            unsigned rating = 0;
++            /* python doesn't have rating file */
++            if (rating_str)
++                rating = xatou(rating_str);
+             if (!allow_comment && (bz->bi_best_bt_rating < rating))
+             {
+                 char bug_id_str[sizeof(int)*3 + 2];
+diff --git a/src/plugins/rhbz.c b/src/plugins/rhbz.c
+index 704b5dc..592fbae 100644
+--- a/src/plugins/rhbz.c
++++ b/src/plugins/rhbz.c
+@@ -115,7 +115,7 @@ static unsigned find_best_bt_rating_in_comments(GList *comments)
+     {
+         char *comment_body = (char *) l->data;
+ 
+-        char *start_rating_line = strstr(comment_body, "rating: ");
++        char *start_rating_line = strstr(comment_body, FILENAME_RATING": ");
+         if (!start_rating_line)
+         {
+             VERB3 error_msg("comment does not contain rating");
+-- 
+1.7.8
+
