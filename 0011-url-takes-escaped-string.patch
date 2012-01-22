@@ -1,0 +1,30 @@
+From 02ab44ad63b5d6261bdedc12cad4022333018316 Mon Sep 17 00:00:00 2001
+From: Nikola Pajkovsky <npajkovs@redhat.com>
+Date: Thu, 8 Dec 2011 17:35:37 +0100
+Subject: [PATCH 11/11] url takes escaped string
+
+Signed-off-by: Nikola Pajkovsky <npajkovs@redhat.com>
+---
+ src/plugins/abrt-bodhi.c |    6 +++++-
+ 1 files changed, 5 insertions(+), 1 deletions(-)
+
+diff --git a/src/plugins/abrt-bodhi.c b/src/plugins/abrt-bodhi.c
+index 11c6d02..43a3b42 100644
+--- a/src/plugins/abrt-bodhi.c
++++ b/src/plugins/abrt-bodhi.c
+@@ -421,7 +421,11 @@ int main(int argc, char **argv)
+     }
+ 
+     if (argv[optind])
+-        query = strbuf_append_strf(query, "package=%s&", argv[optind]);
++    {
++        char *escaped = g_uri_escape_string(argv[optind], NULL, 0);
++        query = strbuf_append_strf(query, "package=%s&", escaped);
++        free(escaped);
++    }
+ 
+     if (query->buf[query->len - 1] == '&')
+         query->buf[query->len - 1] = '\0';
+-- 
+1.7.7.3
+
