@@ -5,7 +5,7 @@
 Summary: Generic library for reporting various problems
 Name: libreport
 Version: 2.0.8
-Release: 4%{?dist}.R
+Release: 5%{?dist}.R
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
@@ -397,6 +397,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
+* Mon Jan 23 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.8-5.R
+- rebuilt for rawhide
+
 * Tue Dec 20 2011 Nikola Pajkovsky <npajkovs@redhat.com> 2.0.8-4.R
 - 768647 - [abrt] libreport-plugin-bugzilla-2.0.8-3.fc16: libreport_xatou:
            Process /usr/bin/reporter-bugzilla was killed by signal 11 (SIGSEGV)
