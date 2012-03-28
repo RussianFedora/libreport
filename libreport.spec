@@ -4,23 +4,12 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.8
-Release: 6%{?dist}
+Version: 2.0.10
+Release: 1%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
-Patch0: 0001-allow-to-specify-bodh-url-and-fix-one-NULL-dereferen.patch
-Patch1: 0002-if-better-backtrace-is-avail-then-upload-one.patch
-Patch2: 0003-search-only-by-duphash-for-selinux.patch
-Patch3: 0004-reorganize-comments-for-bugzilla-message-body-comes-.patch
-Patch4: 0005-do-not-insert-duplicate-comment-to-bugzilla.patch
-Patch5: 0006-if-OSRelease-environ-is-empty-load-OSRelease-from-pr.patch
-Patch6: 0009-bodhi-sync-enum-with-parse_opt.patch
-Patch7: 0010-inicializing-rpm-more-then-once-leads-to-sigsegv-in-.patch
-Patch8: 0011-url-takes-escaped-string.patch
-Patch9: 0001-rhbz-add-the-architecture-to-the-comment-only-if-it-.patch
-Patch10: 0001-rhbz-768647-python-doen-t-have-a-backtrace_rating-fi.patch
 Patch99: %{name}-2.0.5-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -79,8 +68,8 @@ Summary: Python bindings for report-libs
 # Is group correct here? -
 Group: System Environment/Libraries
 Requires: libreport = %{version}-%{release}
-Provides: report = 0.23-1
-Obsoletes: report < 0.23-1
+Provides: report = 0:0.23-1
+Obsoletes: report < 0:0.23-1
 # in report the rhtsupport is in the main package, so we need to install it too
 %if 0%{?rhel} >= 6
 Requires: libreport-plugin-rhtsupport
@@ -102,8 +91,8 @@ with problem dump reports
 Summary: %{name}'s newt interface
 Group: User Interface/Desktops
 Requires: %{name} = %{version}-%{release}
-Provides: report-newt = 0.23-1
-Obsoletes: report-newt < 0.23-1
+Provides: report-newt = 0:0.23-1
+Obsoletes: report-newt < 0:0.23-1
 
 %description newt
 This package contains a simple newt application for reporting
@@ -113,8 +102,8 @@ bugs
 Summary: GTK front-end for libreport
 Group: User Interface/Desktops
 Requires: libreport = %{version}-%{release}
-Provides: report-gtk = 0.23-1
-Obsoletes: report-gtk < 0.23-1
+Provides: report-gtk = 0:0.23-1
+Obsoletes: report-gtk < 0:0.23-1
 
 %description gtk
 Applications for reporting bugs using libreport backend
@@ -142,10 +131,10 @@ Summary: %{name}'s logger reporter plugin
 Group: System Environment/Libraries
 Requires: %{name} = %{version}-%{release}
 Obsoletes: abrt-plugin-logger < 2.0.4
-Provides: report-plugin-localsave = 0.23-1
-Obsoletes: report-plugin-localsave < 0.23-1
-Provides: report-config-localsave = 0.23-1
-Obsoletes: report-config-localsave < 0.23-1
+Provides: report-plugin-localsave = 0:0.23-1
+Obsoletes: report-plugin-localsave < 0:0.23-1
+Provides: report-config-localsave = 0:0.23-1
+Obsoletes: report-config-localsave < 0:0.23-1
 
 %description plugin-logger
 The simple reporter plugin which writes a report to a specified file.
@@ -166,10 +155,10 @@ Summary: %{name}'s bugzilla plugin
 Group: System Environment/Libraries
 Requires: %{name} = %{version}-%{release}
 Obsoletes: abrt-plugin-bugzilla < 2.0.4
-Provides: report-plugin-bugzilla = 0.23-1
-Obsoletes: report-plugin-bugzilla < 0.23-1
-Provides: report-config-bugzilla-redhat-com = 0.23-1
-Obsoletes: report-config-bugzilla-redhat-com < 0.23-1
+Provides: report-plugin-bugzilla = 0:0.23-1
+Obsoletes: report-plugin-bugzilla < 0:0.23-1
+Provides: report-config-bugzilla-redhat-com = 0:0.23-1
+Obsoletes: report-config-bugzilla-redhat-com < 0:0.23-1
 
 %package plugin-bodhi
 Summary: %{name}'s bodhi plugin
@@ -208,32 +197,20 @@ Summary: %{name}'s reportuploader plugin
 Group: System Environment/Libraries
 Requires: %{name} = %{version}-%{release}
 Obsoletes: abrt-plugin-reportuploader < 2.0.4
-Provides: report-plugin-ftp = 0.23-1
-Obsoletes: report-plugin-ftp < 0.23-1
-Provides: report-config-ftp = 0.23-1
-Obsoletes: report-config-ftp < 0.23-1
-Provides: report-plugin-scp = 0.23-1
-Obsoletes: report-plugin-scp < 0.23-1
-Provides: report-config-scp = 0.23-1
-Obsoletes: report-config-scp < 0.23-1
+Provides: report-plugin-ftp = 0:0.23-1
+Obsoletes: report-plugin-ftp < 0:0.23-1
+Provides: report-config-ftp = 0:0.23-1
+Obsoletes: report-config-ftp < 0:0.23-1
+Provides: report-plugin-scp = 0:0.23-1
+Obsoletes: report-plugin-scp < 0:0.23-1
+Provides: report-config-scp = 0:0.23-1
+Obsoletes: report-config-scp < 0:0.23-1
 
 %description plugin-reportuploader
 Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
 %prep
 %setup -q
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
-
 %patch99 -p1
 
 %build
@@ -285,6 +262,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %defattr(-,root,root,-)
 %doc README COPYING
 %config(noreplace) %{_sysconfdir}/%{name}/report_event.conf
+%config(noreplace) %{_sysconfdir}/%{name}/forbidden_words.conf
 %{_libdir}/libreport.so.*
 %{_libdir}/libabrt_dbus.so.*
 %{_libdir}/libabrt_web.so.*
@@ -356,6 +334,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %files plugin-mailx
 %defattr(-,root,root,-)
+%config(noreplace) %{_sysconfdir}/libreport/plugins/mailx.conf
 %{_sysconfdir}/libreport/events/report_Mailx.xml
 %config(noreplace) %{_sysconfdir}/libreport/events.d/mailx_event.conf
 %{_mandir}/man*/reporter-mailx.*
@@ -397,18 +376,21 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
-* Thu Mar 15 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.8-6.R
-- rebuilt
+* Wed Mar 28 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.10-1.R
+- send Fedora to bugzilla instead of RFRemix
 
-* Mon Jan 23 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.8-5.R
-- rebuilt for rawhide
+* Tue Mar 26 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-1
+- updated to latest upstream
 
-* Tue Dec 20 2011 Nikola Pajkovsky <npajkovs@redhat.com> 2.0.8-4.R
+* Mon Jan 23 2012 Dan Horák <dan@danny.cz> - 2.0.8-6
+- rebuilt for json-c-0.9-4.fc17
+
+* Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.8-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Tue Dec 20 2011 Nikola Pajkovsky <npajkovs@redhat.com> 2.0.8-4
 - 768647 - [abrt] libreport-plugin-bugzilla-2.0.8-3.fc16: libreport_xatou:
            Process /usr/bin/reporter-bugzilla was killed by signal 11 (SIGSEGV)
-
-* Sat Dec 19 2011 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.8-3.R
-- push Fedora instead of RFRemix to bugzilla.
 
 * Fri Dec 09 2011 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.8-3
 - fixed few crashes in bodhi plugin
