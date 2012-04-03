@@ -5,11 +5,12 @@
 Summary: Generic library for reporting various problems
 Name: libreport
 Version: 2.0.10
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
+Patch0: 0001-Add-cgroup-information-filename.patch
 Patch99: %{name}-2.0.5-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -211,6 +212,7 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
 %prep
 %setup -q
+%patch0 -p1 -b .cgroups
 %patch99 -p1
 
 %build
@@ -376,6 +378,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
+* Mon Apr 02 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-2.R
+- added cgroups filename define
+
 * Wed Mar 28 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.10-1.R
 - send Fedora to bugzilla instead of RFRemix
 
