@@ -5,12 +5,16 @@
 Summary: Generic library for reporting various problems
 Name: libreport
 Version: 2.0.10
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
 Patch0: 0001-Add-cgroup-information-filename.patch
+Patch1: 0001-rhbz795548-opt-out-smolt.patch
+Patch2: 0001-fixed-memory-leak-in-comment-dup.patch
+Patch3: 0001-rhbz-820985-bz-4.2-doesn-t-have-bug_id-member-it-s-i.patch
+Patch4: 0002-bugzilla-query-bz-version-and-for-4.2-use-id-element.patch
 Patch99: %{name}-2.0.5-read-fedora-release.patch
 BuildRequires: dbus-devel
 BuildRequires: gtk2-devel
@@ -213,6 +217,10 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 %prep
 %setup -q
 %patch0 -p1 -b .cgroups
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
 %patch99 -p1
 
 %build
@@ -378,6 +386,10 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
+* Mon May 14 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-3.R
+- fixed compatibility with bugzilla 4.2
+- Resolved: #820985, #795548
+
 * Mon Apr 02 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-2.R
 - added cgroups filename define
 
