@@ -4,20 +4,18 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.10
-Release: 3%{?dist}
+Version: 2.0.13
+Release: 2%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
-Patch0: 0001-Add-cgroup-information-filename.patch
-Patch1: 0001-rhbz795548-opt-out-smolt.patch
-Patch2: 0001-fixed-memory-leak-in-comment-dup.patch
-Patch3: 0001-rhbz-820985-bz-4.2-doesn-t-have-bug_id-member-it-s-i.patch
-Patch4: 0002-bugzilla-query-bz-version-and-for-4.2-use-id-element.patch
-Patch99: %{name}-2.0.5-read-fedora-release.patch
+# This patch is desired only in F17 because of backward compatibility
+Patch0: libreport-2.0.13-ureport-doesnt-fail-on-validation-error.patch
+Patch10: libreport-2.0.13-read-fedora-release.patch
+
 BuildRequires: dbus-devel
-BuildRequires: gtk2-devel
+BuildRequires: gtk3-devel
 BuildRequires: curl-devel
 BuildRequires: desktop-file-utils
 BuildRequires: xmlrpc-c-devel
@@ -33,6 +31,7 @@ BuildRequires: asciidoc
 BuildRequires: xmlto
 BuildRequires: newt-devel
 BuildRequires: libproxy-devel
+BuildRequires: btparser-devel
 Requires: libreport-filesystem
 # required for update from old report library, otherwise we obsolete report-gtk
 # and all it's plugins, but don't provide the python bindings and the sealert
@@ -41,7 +40,7 @@ Requires: libreport-filesystem
 Requires: libreport-python = %{version}-%{release}
 
 # for rhel6
-%if 0%{?rhel} >= 6
+%if 0%{?rhel} == 6
 BuildRequires: gnome-keyring-devel
 %else
 BuildRequires: libgnome-keyring-devel
@@ -67,6 +66,22 @@ Requires: libreport = %{version}-%{release}
 
 %description devel
 Development libraries and headers for libreport
+
+%package web
+Summary: Library providing network API for libreport
+Group: Libraries
+Requires: libreport = %{version}-%{release}
+
+%description web
+Library providing network API for libreport
+
+%package web-devel
+Summary: Development headers for libreport-web
+Group: Development/Libraries
+Requires: libreport-web = %{version}-%{release}
+
+%description web-devel
+Development headers for libreport-web
 
 %package python
 Summary: Python bindings for report-libs
@@ -165,16 +180,14 @@ Obsoletes: report-plugin-bugzilla < 0:0.23-1
 Provides: report-config-bugzilla-redhat-com = 0:0.23-1
 Obsoletes: report-config-bugzilla-redhat-com < 0:0.23-1
 
-%package plugin-bodhi
-Summary: %{name}'s bodhi plugin
+%package plugin-ureport
+Summary: %{name}'s micro report plugin
 BuildRequires: json-c-devel
 Group: System Environment/Libraries
 Requires: %{name} = %{version}-%{release}
-Requires: PackageKit
-BuildRequires: rpm-devel
 
-%description plugin-bodhi
-Search for a new updates in bodhi server
+%description plugin-ureport
+Uploads micro-report to abrt server
 
 %description plugin-bugzilla
 Plugin to report bugs into the bugzilla.
@@ -216,17 +229,12 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
 %prep
 %setup -q
-%patch0 -p1 -b .cgroups
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch99 -p1
+%patch0 -p1
+%patch10 -p1
 
 %build
 autoconf
-%configure
-CFLAGS="-fno-strict-aliasing"
+CFLAGS="%{optflags} -Werror" %configure --disable-silent-rules
 make %{?_smp_mflags}
 
 %install
@@ -275,8 +283,6 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/%{name}/forbidden_words.conf
 %{_libdir}/libreport.so.*
 %{_libdir}/libabrt_dbus.so.*
-%{_libdir}/libabrt_web.so.*
-%exclude %{_libdir}/libabrt_web.so
 %{_mandir}/man5/report_event.conf.5*
 
 %files filesystem
@@ -302,6 +308,15 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_libdir}/libabrt_dbus.so
 %{_libdir}/pkgconfig/libreport.pc
 %dir %{_includedir}/libreport
+
+%files web
+%defattr(-,root,root,-)
+%{_libdir}/libreport-web.so*
+
+%files web-devel
+%defattr(-,root,root,-)
+%{_includedir}/libreport/libreport_curl.h
+%{_libdir}/pkgconfig/libreport-web.pc
 
 %files python
 %defattr(-,root,root,-)
@@ -350,10 +365,11 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_mandir}/man*/reporter-mailx.*
 %{_bindir}/reporter-mailx
 
-%files plugin-bodhi
+%files plugin-ureport
 %defattr(-,root,root,-)
-%{_bindir}/abrt-bodhi
-%{_mandir}/man1/abrt-bodhi.1.gz
+%{_bindir}/reporter-ureport
+#%{_mandir}/man1/reporter-ureport.1.gz
+%{_sysconfdir}/libreport/events/report_uReport.xml
 
 %files plugin-bugzilla
 %defattr(-,root,root,-)
@@ -386,15 +402,73 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
-* Mon May 14 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-3.R
+* Thu Sep 13 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.13-2.R
+- send Fedora to bugzilla instead of RFRemix
+
+* Wed Aug 29 2012 Jakub Filak <jfilak@redhat.com> 2.0.13-2
+- ureport doesn't fail on "Validition error" server response
+
+* Wed Aug 22 2012 Jakub Filak <jfilak@redhat.com> 2.0.13-1
+- reporter-ureport: save backtrace hash to reported_to
+- trac#683: show the description file in bugzilla comment 0
+- trac#684: report-gtk saves only loaded files
+- reporter-ureport: allow sending attachments
+- event_config_dialog: make it resizable; tweak Uploader hint
+- add python binding for problem_data_send_to_abrt
+- reporter-ureport: attach bug ID from reported_to
+- reporter-ureport: make configurable only URL to a server
+
+* Wed Aug 15 2012 Jakub Filak <jfilak@redhat.com> 2.0.12-5
+- ureport doesn't fail on "Validition error" server response
+- rhbz#741255: don't autodetect executable for sealert reports
+- show message from the server for known uReports
+- trac#678: reporter-bugzilla: do not attach empty files
+- Resolves: #741255
+
+* Tue Aug 14 2012 Jakub Filak <jfilak@redhat.com> 2.0.12-4
+- rhbz#846389: generate koops description according to rhbz std template
+- trac#556: skip not provided bz bug description template fields
+- report-gtk: don't log THANKYOU message
+- added internal_libreport.h into POTFILES.in rhbz#801255
+- updated po files
+- Resolves: #801255, #846389
+
+* Fri Aug 10 2012 Jakub Filak <jfilak@redhat.com> 2.0.12-3
+- wizard: small changes to message texts and one function name
+- trac#623: dd_opendir() fails if time file doesn't contain valid time stamp
+- trac#660: report-cli asks for premission to send sensitive data
+- trac#660: report-gtk asks for permission to send sensitive data
+- trac#660: report-gtk: introduce generic ask_yes_no() function for options
+- trac#660: add support for sendining-sensitive-data event option
+- Do not check for analyzer == "Kerneloops" when appending "TAINTED" msg
+- fix leaks in list_possible_events()
+
+* Tue Aug 7 2012 Jakub Filak <jfilak@redhat.com> 2.0.12-2
+- report-gtk: fixed bug in automatic running of next event
+- don't try to delete dump dir which doesn't exist rhbz#799909
+- Resolves: #799909
+
+* Fri Aug 3 2012 Jakub Filak <jfilak@redhat.com> 2.0.12-1
+- new upstream release
+- trac#642: run the next event if the current one finished without errors
+- trac#641: don't allow event chain to continue, if user don't want to steal a directory
+- trac#640: report-gtk replaces 'Forward' button with 'Close' button on finished reporting
+- Fix bugs uncovered by Coverity. Closes rhbz#809416
+- Resolves: #809416
+
+* Tue Jul 31 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.11-1
+- new upstream release
+
+
+* Fri Jun 01 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-4
+- fixed build on rhel7
+
+* Mon May 14 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-3
 - fixed compatibility with bugzilla 4.2
 - Resolved: #820985, #795548
 
-* Mon Apr 02 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-2.R
+* Mon Apr 02 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-2
 - added cgroups filename define
-
-* Wed Mar 28 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.10-1.R
-- send Fedora to bugzilla instead of RFRemix
 
 * Tue Mar 26 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-1
 - updated to latest upstream

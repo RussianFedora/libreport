@@ -1,0 +1,121 @@
+From f34a1ba30b825332d7ae5dd115b75f5cd79e01a5 Mon Sep 17 00:00:00 2001
+From: Jakub Filak <jfilak@redhat.com>
+Date: Wed, 29 Aug 2012 09:57:16 +0200
+Subject: [LIBREPORT PATCH] trac#680: only for Fedora package 17 repository
+ patch (not to push to abrt git)
+
+reporter-ureport doesn't fail on "Validation error" response becase we
+want to allow users to report problems created by older version of
+abrt/libreport
+
+Signed-off-by: Jakub Filak <jfilak@redhat.com>
+---
+ src/plugins/ureport.c | 43 ++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 34 insertions(+), 9 deletions(-)
+
+diff --git a/src/plugins/ureport.c b/src/plugins/ureport.c
+index 96c7878..6569061 100644
+--- a/src/plugins/ureport.c
++++ b/src/plugins/ureport.c
+@@ -51,6 +51,7 @@ enum response_type
+     UREPORT_SERVER_RESP_UNKNOWN_TYPE,
+     UREPORT_SERVER_RESP_KNOWN,
+     UREPORT_SERVER_RESP_ERROR,
++    UREPORT_SERVER_RESP_REJECTED,
+ };
+ 
+ struct ureport_server_response {
+@@ -74,6 +75,13 @@ static bool ureport_server_parse_json(json_object *json, struct ureport_server_r
+     {
+         out_response->type = UREPORT_SERVER_RESP_ERROR;
+         out_response->value = json_object_to_json_string(obj);
++
++        /* try to detect validation errors */
++        /* these errors are probably caused by reporting a bug created by older libreport version */
++        /* we wan't to allow users report old problems thus we must exit with SUCCESS code */
++        if (prefixcmp(out_response->value, "Validation failed:"))
++            out_response->type = UREPORT_SERVER_RESP_REJECTED;
++
+         return true;
+     }
+ 
+@@ -99,17 +107,21 @@ static bool ureport_server_parse_json(json_object *json, struct ureport_server_r
+     return false;
+ }
+ 
+-static bool check_response_statuscode(post_state_t *post_state, 
++static bool check_response_statuscode(post_state_t *post_state,
+                                       const char *url)
+ {
+     if (post_state->http_resp_code != 202)
+     {
+         char *errmsg = post_state->curl_error_msg;
+         if (errmsg && *errmsg)
+-            error_msg("%s '%s'", errmsg, url);
++        {
++            VERB1 error_msg("%s '%s'", errmsg, url);
++        }
+         else
+-            error_msg("Unexpected HTTP status code: %d",
+-                      post_state->http_resp_code);
++        {
++            VERB1 error_msg("Unexpected HTTP status code: %d",
++                            post_state->http_resp_code);
++        }
+ 
+         return false;
+     }
+@@ -189,7 +201,12 @@ int main(int argc, char **argv)
+         dd_close(dd);
+ 
+         if (!ureport_result || !ureport_result->bthash)
+-            error_msg_and_die(_("This problem does not have an uReport assigned."));
++        {
++            /* these errors are probably caused by reporting a bug */
++            /* created by older libreport version */
++            VERB1 error_msg(_("This problem does not have an uReport assigned."));
++            return 0;
++        }
+ 
+         if (!bz_result || !bz_result->url)
+             error_msg_and_die(_("This problem has not been reported to Bugzilla."));
+@@ -234,10 +251,6 @@ int main(int argc, char **argv)
+ 
+     int ret = 1; /* return 1 by default */
+ 
+-    if (!check_response_statuscode(post_state, dest_url))
+-        /* check_response_statuscode() already logged an error message */
+-        goto err;
+-
+     json_object *const json = json_tokener_parse(post_state->body);
+ 
+     if (is_error(json))
+@@ -264,6 +277,12 @@ int main(int argc, char **argv)
+     switch (response.type)
+     {
+         case UREPORT_SERVER_RESP_KNOWN:
++            if (!check_response_statuscode(post_state, dest_url))
++            {
++                error_msg("uReport server response type mismatch");
++                goto format_err;
++            }
++
+             VERB1 log("is known: %s", response.value);
+             ret = 0;
+ 
+@@ -288,6 +307,12 @@ int main(int argc, char **argv)
+                 log("THANKYOU");
+             }
+             break;
++        case UREPORT_SERVER_RESP_REJECTED:
++            /* it is silent because we don't want to scary users */
++            /* with a weired message about missing data */
++            VERB1 log("server rejected uReport: %s", response.value);
++            ret = 0;
++            break;
+         case UREPORT_SERVER_RESP_ERROR:
+             VERB1 log("server side error: %s", response.value);
+             ret = 1; /* just to be sure */
+-- 
+1.7.11.4
+
