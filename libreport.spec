@@ -4,14 +4,14 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.13
-Release: 2%{?dist}
+Version: 2.0.14
+Release: 1%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
 # This patch is desired only in F17 because of backward compatibility
-Patch0: libreport-2.0.13-ureport-doesnt-fail-on-validation-error.patch
+Patch0: libreport-2.0.14-ureport-doesnt-fail-on-validation-error.patch
 Patch10: libreport-2.0.13-read-fedora-release.patch
 
 BuildRequires: dbus-devel
@@ -402,6 +402,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
+* Mon Oct  1 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.14-1.R
+- update to 2.0.14
+
 * Thu Sep 13 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.13-2.R
 - send Fedora to bugzilla instead of RFRemix
 
