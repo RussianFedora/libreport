@@ -4,7 +4,7 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.18
+Version: 2.0.19
 Release: 1%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
@@ -402,6 +402,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
+* Sun Nov 25 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.19-1.R
+- update to 2.0.19
+
 * Fri Nov  2 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.18-1.R
 - update to 2.0.18
 
