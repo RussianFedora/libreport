@@ -281,6 +281,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %doc README COPYING
 %config(noreplace) %{_sysconfdir}/%{name}/report_event.conf
 %config(noreplace) %{_sysconfdir}/%{name}/forbidden_words.conf
+%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format.conf
+%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format_libreport.conf
+%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format_kernel.conf
 %{_libdir}/libreport.so.*
 %{_libdir}/libabrt_dbus.so.*
 %{_mandir}/man5/report_event.conf.5*
