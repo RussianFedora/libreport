@@ -1,0 +1,39 @@
+From 313818e69e92d55da6d7bd01039cc21def7209dc Mon Sep 17 00:00:00 2001
+From: Jakub Filak <jfilak@redhat.com>
+Date: Tue, 25 Sep 2012 09:32:40 +0200
+Subject: [LIBREPORT PATCH] trac#680: only for Fedora package 17 repository
+ patch (not to push to abrt git)
+
+reporter-ureport doesn't fail on "Validation error" response becase we
+want to allow users to report problems created by older version of
+abrt/libreport
+
+Signed-off-by: Jakub Filak <jfilak@redhat.com>
+---
+ src/plugins/ureport.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/plugins/ureport.c b/src/plugins/ureport.c
+index 685bbad..762ddee 100644
+--- a/src/plugins/ureport.c
++++ b/src/plugins/ureport.c
+@@ -389,7 +389,15 @@ int main(int argc, char **argv)
+     }
+     else
+     {
+-        VERB1 log("server side error: %s", response->value);
++        if (prefixcmp("Validation failed:", response->value))
++        {
++            VERB1 log("Server has rejected an ureport because of invalid format: %s", response->value);
++            ret = 0;
++        }
++        else
++        {
++            VERB1 log("server side error: %s", response->value);
++        }
+     }
+ 
+     free_ureport_server_response(response);
+-- 
+1.7.11.4
+

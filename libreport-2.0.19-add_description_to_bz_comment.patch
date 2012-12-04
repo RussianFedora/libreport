@@ -1,0 +1,27 @@
+From b3fe4ce72fa196cbfe4f5faabfd7e4baa43cb064 Mon Sep 17 00:00:00 2001
+From: Denys Vlasenko <vda.linux@googlemail.com>
+Date: Fri, 30 Nov 2012 14:42:45 +0100
+Subject: [LIBREPORT PATCH] reporter-bz: add AVC's description added to BZ
+ comment
+
+Signed-off-by: Denys Vlasenko <vda.linux@googlemail.com>
+---
+ src/plugins/bugzilla_format_libreport.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/plugins/bugzilla_format_libreport.conf b/src/plugins/bugzilla_format_libreport.conf
+index 9fc1f0d..68fe7c5 100644
+--- a/src/plugins/bugzilla_format_libreport.conf
++++ b/src/plugins/bugzilla_format_libreport.conf
+@@ -31,7 +31,7 @@
+ #   which excludes given element from all wildcards
+ #
+ %summary: %reason%
+-Description of problem: %bare_comment
++Description of problem: %bare_comment, %bare_description
+ Additional info: -pkg_arch,-pkg_epoch,-pkg_name,-pkg_release,-pkg_version,-component,-analyzer,-count,-duphash,-uuid,-username,-hostname,-abrt_version,-architecture,-os_release,-time,-pid,-pwd,%oneline
+ Truncated backtrace: %bare_%short_backtrace
+ %attach: -reported_to,-comment,-reason,-event_log,%multiline,-coredump,%binary
+-- 
+1.7.11.7
+
