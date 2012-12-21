@@ -226,6 +226,25 @@ Obsoletes: report-config-scp < 0:0.23-1
 %description plugin-reportuploader
 Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
+%package fedora
+Summary: Default configuration for reporting bugs via Fedora infrastructure
+Group: Applications/File
+
+%description fedora
+Default configuration for reporting bugs via Fedora infrastructure
+used to easy configure the reporting process for Fedora sytems. Just
+install this package and you're done.
+
+%package anaconda
+Summary: Default configuration for reporting anaconda bugs
+Group: Applications/File
+Requires: libreport-plugin-reportuploader
+Requires: libreport-plugin-bugzilla
+
+%description anaconda
+Default configuration for reporting Anaconda problems using Fedora
+infrastructure or uploading the gathered data over ftp/scp...
+
 %prep
 %setup -q
 %patch10 -p1
@@ -302,6 +321,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_includedir}/libreport/problem_data.h
 %{_includedir}/libreport/report.h
 %{_includedir}/libreport/run_event.h
+%{_includedir}/libreport/file_obj.h
+%{_includedir}/libreport/config_item_info.h
+%{_includedir}/libreport/workflow.h
 # Private api headers:
 %{_includedir}/libreport/internal_abrt_dbus.h
 %{_includedir}/libreport/internal_libreport.h
@@ -336,6 +358,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %files gtk
 %defattr(-,root,root,-)
 %{_bindir}/report-gtk
+%{_libexecdir}/abrt-screencast
 %{_libdir}/libreport-gtk.so.*
 
 %files gtk-devel
@@ -401,6 +424,18 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_bindir}/reporter-upload
 %{_sysconfdir}/libreport/events/report_Uploader.xml
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
+%{_sysconfdir}/libreport/workflows/workflow_Upload.xml
+
+%files fedora
+%defattr(-,root,root,-)
+%{_sysconfdir}/libreport/workflows/workflow_Fedora.xml
+%config(noreplace) %{_sysconfdir}/libreport/workflows.d/report_fedora.conf
+
+%files anaconda
+%defattr(-,root,root,-)
+%{_sysconfdir}/libreport/workflows/workflow_AnacondaFedora.xml
+%{_sysconfdir}/libreport/workflows/workflow_AnacondaUpload.xml
+%config(noreplace) %{_sysconfdir}/libreport/workflows.d/anaconda_event.conf
 
 %changelog
 * Fri Dec 21 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.20-1.R
