@@ -4,16 +4,13 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.19
-Release: 3%{?dist}
+Version: 2.0.20
+Release: 1%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
 # This patch is desired only in F17 because of backward compatibility
-Patch0: libreport-2.0.14-ureport-doesnt-fail-on-validation-error.patch
-Patch1: libreport-2.0.19-bugzilla_summary_formatting.patch
-Patch2: libreport-2.0.19-add_description_to_bz_comment.patch
 Patch10: libreport-2.0.13-read-fedora-release.patch
 
 BuildRequires: dbus-devel
@@ -231,9 +228,6 @@ Plugin to report bugs into anonymous FTP site associated with ticketing system.
 
 %prep
 %setup -q
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
 %patch10 -p1
 
 %build
@@ -409,6 +403,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/libreport/events.d/uploader_event.conf
 
 %changelog
+* Fri Dec 21 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.20-1.R
+- update to 2.0.20
+
 * Tue Dec  4 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.19-3.R
 - add a description of AVC to bugzilla comment 0
 
