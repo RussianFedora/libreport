@@ -1,0 +1,21 @@
+diff -urN libreport-2.1.2.orig/src/lib/dump_dir.c libreport-2.1.2/src/lib/dump_dir.c
+--- libreport-2.1.2.orig/src/lib/dump_dir.c	2013-03-26 09:29:41.149909680 +0400
++++ libreport-2.1.2/src/lib/dump_dir.c	2013-03-26 09:30:55.360713187 +0400
+@@ -637,7 +637,7 @@
+ 
+     if (!release)
+     {
+-        release = load_text_file("/etc/system-release",
++        release = load_text_file("/etc/rfremix-release",
+                 DD_LOAD_TEXT_RETURN_NULL_ON_FAILURE | DD_OPEN_FOLLOW);
+         if (!release)
+             release = load_text_file("/etc/redhat-release", DD_OPEN_FOLLOW);
+@@ -645,7 +645,7 @@
+         if (chroot_dir)
+         {
+             free(release);
+-            char *chrooted_name = concat_path_file(chroot_dir, "/etc/system-release");
++            char *chrooted_name = concat_path_file(chroot_dir, "/etc/rfremix-release");
+             release = load_text_file(chrooted_name, DD_OPEN_FOLLOW);
+             free(chrooted_name);
+             if (release[0])

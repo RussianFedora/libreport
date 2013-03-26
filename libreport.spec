@@ -4,14 +4,15 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.0.20
-Release: 1%{?dist}
+Version: 2.1.2
+Release: 2%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
-# This patch is desired only in F17 because of backward compatibility
-Patch10: libreport-2.0.13-read-fedora-release.patch
+# Remove this patch with libreport-2.1.3
+Patch0: libreport-2.1.2-fix_empty_archives_for_emergency_analysis.patch
+Patch1:	libreport-2.1.2-read-fedora-release.patch
 
 BuildRequires: dbus-devel
 BuildRequires: gtk3-devel
@@ -31,12 +32,14 @@ BuildRequires: xmlto
 BuildRequires: newt-devel
 BuildRequires: libproxy-devel
 BuildRequires: btparser-devel
+BuildRequires: doxygen
 Requires: libreport-filesystem
 # required for update from old report library, otherwise we obsolete report-gtk
 # and all it's plugins, but don't provide the python bindings and the sealert
 # end-up with: can't import report.GtkIO
 # FIXME: can be removed when F15 will EOLed, needs to stay in rhel6!
 Requires: libreport-python = %{version}-%{release}
+Conflicts: abrt < 2.1.0
 
 # for rhel6
 %if 0%{?rhel} == 6
@@ -121,6 +124,12 @@ bugs
 Summary: GTK front-end for libreport
 Group: User Interface/Desktops
 Requires: libreport = %{version}-%{release}
+Requires: libreport-plugin-reportuploader = %{version}-%{release}
+%if 0%{?rhel} >= 6
+%else
+Requires: recordmydesktop
+Requires: pygobject3
+%endif
 Provides: report-gtk = 0:0.23-1
 Obsoletes: report-gtk < 0:0.23-1
 
@@ -203,8 +212,9 @@ Plugin to report bugs into RH support system.
 %package compat
 Summary: %{name}'s compat layer for obsoleted 'report' package
 Group: System Environment/Libraries
-Requires: %{name}-plugin-bugzilla
-Requires: %{name}-plugin-rhtsupport
+Requires: libreport = %{version}-%{release}
+Requires: %{name}-plugin-bugzilla = %{version}-%{release}
+Requires: %{name}-plugin-rhtsupport = %{version}-%{release}
 
 %description compat
 Provides 'report' command-line tool.
@@ -247,11 +257,14 @@ infrastructure or uploading the gathered data over ftp/scp...
 
 %prep
 %setup -q
-%patch10 -p1
+%patch0 -p1 -b .updateex
+%patch1 -p1 -b .rfremix
 
 %build
 autoconf
-CFLAGS="%{optflags} -Werror" %configure --disable-silent-rules
+# Commented because of deprecated GTK API
+#CFLAGS="%{optflags} -Werror" %configure --disable-silent-rules
+CFLAGS="%{optflags}" %configure --enable-doxygen-docs --disable-silent-rules
 make %{?_smp_mflags}
 
 %install
@@ -298,9 +311,6 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %doc README COPYING
 %config(noreplace) %{_sysconfdir}/%{name}/report_event.conf
 %config(noreplace) %{_sysconfdir}/%{name}/forbidden_words.conf
-%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format.conf
-%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format_libreport.conf
-%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format_kernel.conf
 %{_libdir}/libreport.so.*
 %{_libdir}/libabrt_dbus.so.*
 %{_mandir}/man5/report_event.conf.5*
@@ -315,6 +325,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %files devel
 %defattr(-,root,root,-)
 # Public api headers:
+%doc apidoc/html/*
 %{_includedir}/libreport/client.h
 %{_includedir}/libreport/dump_dir.h
 %{_includedir}/libreport/event_config.h
@@ -327,6 +338,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 # Private api headers:
 %{_includedir}/libreport/internal_abrt_dbus.h
 %{_includedir}/libreport/internal_libreport.h
+%{_includedir}/libreport/xml_parser.h
 %{_libdir}/libreport.so
 %{_libdir}/libabrt_dbus.so
 %{_libdir}/pkgconfig/libreport.pc
@@ -360,6 +372,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_bindir}/report-gtk
 %{_libexecdir}/abrt-screencast
 %{_libdir}/libreport-gtk.so.*
+%config(noreplace) %{_sysconfdir}/libreport/events.d/emergencyanalysis_event.conf
+%{_sysconfdir}/libreport/events/report_EmergencyAnalysis.xml
+
 
 %files gtk-devel
 %defattr(-,root,root,-)
@@ -398,6 +413,10 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %files plugin-bugzilla
 %defattr(-,root,root,-)
 %config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla.conf
+%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format.conf
+%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_formatdup.conf
+%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format_libreport.conf
+%config(noreplace) %{_sysconfdir}/libreport/plugins/bugzilla_format_kernel.conf
 %{_sysconfdir}/libreport/events/report_Bugzilla.xml
 %config(noreplace) %{_sysconfdir}/libreport/events/report_Bugzilla.conf
 %config(noreplace) %{_sysconfdir}/libreport/events.d/bugzilla_event.conf
@@ -437,39 +456,244 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_sysconfdir}/libreport/workflows/workflow_AnacondaUpload.xml
 %config(noreplace) %{_sysconfdir}/libreport/workflows.d/anaconda_event.conf
 
-%changelog
-* Fri Dec 21 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.20-1.R
-- update to 2.0.20
 
-* Tue Dec  4 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.19-3.R
+%changelog
+* Tue Mar 26 2013 Arkady L. Shane <ashejn@russianfedora.ru> 2.1.2-2.R
+- use /etc/rfremix-release to detect os name
+
+* Fri Mar 22 2013 Jakub Filak <jfilak@redhat.com> 2.1.2-2
+- add a patch which fixes a problem with empty archives in emergency analysis
+
+* Tue Mar 19 2013 Jakub Filak <jfilak@redhat.com> 2.1.2-1
+- always treat os-release as textual related to rhbz#922433
+- is_text_file(): bump allowable non-ASCII chars from 2% to 10%. Closes rhbz#922433
+- report-gtk: don't clear warnings after reporting is finished
+- report-gtk: show tabs only in verbose expert mode
+- report-gtk: prettify the workflow buttons rhbz#917694
+- report-gtk: add a button to report reporting failures
+- uReport: do not show URL twice in error output
+- uReport: detect missing type field at client side
+- uReport: add more explanatory message when upload fails
+- uReport: improve messages. Closes #579
+- workflows: a less confusing event name for reporting to Fedora infrastructure
+- workflows: correct an event name for reporting to Fedora in anaconda config
+- fixed workflow localization closes #137
+- run_event_state: expose children_count in python wrapper
+- add the proxy options to the addvanced section of event configurations
+- don't suid before running yum related to rhbz#759443
+- update translation
+- ss: stop reconnecting to the session bus
+- ss: destroy all timeout GSources attached to the main context
+- ss: add a timeout to the waiting for the Completed signal
+- dd: convert time at lock time
+- spawn_next_command: make process group creation optional
+- fork_execv_on_steroids: fix close/move order of fds, move getpwuid out of fork
+- problem API: generate UUID if is missing instead of DUPHASH
+- fix logic of 'Dont ask me again' dialogues (stop returning true for all options)
+- make [p]error_msg[_and_die] more fork-in-multithreaded-app safe
+- Make forking code paths more robust.
+- curl_debug: fix use of "%.*s" (need to pass an int, not size_t)
+- curl_debug: prettify debug output
+- Resolves: #871126, #885055, #890778, #901467, #916389, #917684, #917694, #919536, #922433, #923117
+
+* Thu Feb 07 2013 Jakub Filak <jfilak@redhat.com> 2.1.1-1
+- move 'reporter-mailx' from post-create event to notify(-dup) event
+- reporter-bugzilla: use base64 XMLRPC type for encoded data instead of string type
+- ureport: fix extra quoting when reporting error messages
+- Resolves: #908210
+
+* Tue Feb 05 2013 Jakub Filak <jfilak@redhat.com> 2.1.0-2
+- configure libreport to be in conflict with abrt < 2.1.0
+
+* Mon Feb 04 2013 Jakub Filak <jfilak@redhat.com> 2.1.0-1
+- dd: unify error handling in save_binary_file()
+- dd_sanitize: don't sanitize symlinks
+- rpm: preserve old configuration for <F17 and <REHL7
+- configure: change defaults to be compliant with /var/tmp/abrt
+- configure: fix dump dir mode help string
+- dd: always sanitize mode of saved file
+- rhbz: replace obsolete methods by their substitutes
+- reporter-rhtsupport: improve error detection and logging
+- mailx: remove extra trailing newline in help text
+- spec: add requires section for pygobject3
+- reporter-rhtsupport: retain " Beta" suffix in version. Closes rhbz#896090
+- Fix bugs discoverent by Coverity
+- bz: swap 'bug id' arg with 'item name' arg in attach fn call
+- dd: move dir accessibility check from abrt to libreport
+- don't overwrite "type" rhbz#902828
+- move chown functionality from ABRT DBus to libreport
+- expose configure cmd options for dump dir mode and ownership
+- cli: guard against user ^Z-ing editor and being stuck
+- report-cli: don't close tty fd too early
+- report-cli: switch terminal's fg process group to editor's one; and back
+- dd: open symlinks on request
+- minor fix to the pkg-config file
+- reporter-rhtsupport: extract error message from Strata-Message: header
+- add build time condition for dump dir ownership schema
+- reporter-bz: post a comment to dup bug, if we found a dup. version 2.
+- report-cli: use Client API
+- report-cli: add event name prefix before question
+- run_event: default callbacks for logging and errors
+- make default dump dir mode configurable at build time
+- Stop reading text files one byte at a time
+- make dd_delete_item check that dd is locked
+- never follow symlinks rhbz#887866
+- Revert "reporter-bz: post a comment to dup bug, if we found a dup."
+- wizard: make radio-button text wrap
+- reporter-bz: post a comment to dup bug, if we found a dup.
+- added missing article
+- make the dependency on recordmydesktop soft - related to rhbz#891512
+- cli: use !ec_skip_review as indicator that the event is a reporter
+- Add and use "report-cli" event instead of removed "report-cli -r" option
+- cli: remove superfluous problem_data_free() call
+- uReport: add more explanatory message when upload fails
+- report-cli rework
+- don't require recordmydesktop on RHEL rhbz#891512
+- fixed the relro flags rhbz#812283
+- bugzilla_format_kernel.conf: Attach dmesg element. Closes rhbz#826058
+- bugzilla_format_kernel.conf: fix %summary
+- Make get_dirsize_find_largest_dir less talkative.
+- Minor fixes: robustify start_command(), fix style, fix English in msgs
+- Fix typo, remove c-format from a not c-formatted message
+- Resolves: #826058, #902828
+
+* Mon Jan  1 2013 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.20-2
+- don't require recordmydesktop on rhel
+
+* Wed Dec 19 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.20-1
+- New version 2.0.20
+- updated po files
+- add abrt-screencast to POTFILES.in
+- added screen casting support to the wizard
+- fix memory leaks in workflow code
+- report_problem_in_dir(): make LIBREPORT_DEL_DIR work
+- add Yes/No dialog saving answer
+- refactor: move ask_yes_no_save_result from wizard to libreport-gtk
+- added anaconda workflows rhbz#885690
+- report-python: export dd_delete_item too
+- report-python: export DD_OPEN_READONLY too
+- strtrimch: optimize it a bit
+- show only workflows applicable to actual problem directory
+- report-gtk: destroy global text cache only once
+- change rules for FILENAME_NOT_REPORTABLE to always include trailing period.
+- ask for BZ login/BZ pwd if Login attempt failed
+- ask for BZ login/BZ password if not provided by conf
+- remove new line from ask/ask_password responses
+- add ask_yes_no_yesforever() to Python client API
+- make client API independent on translation
+- run_event: use client functions for the communication callbacks
+- clean the workflow buttons when refreshing the event page
+- Fix a bug - inverted check for failed rename() call
+- wrap the not_reportable label .trac#908
+- don't show events without configuration in preferences .trac#881
+- - implemented saving/loading configuratio for workflows - related to trac#822
+- reporter-bz: add AVC's description added to BZ comment
+- add microseconds to dump dir name (problem ID)
+- teach reporter-bugzilla to read BZ ID from reported_to element
+- teach reporter-bugzilla to add reporter to CC
+- introduce a function deleting dd's element
+- introduce a function getting no. of Bytes of dd's element
+- make event config name immutable
+- fixed segv in the last commit
+- made struct workflow private related to trac#822
+- don't show the spinner if the problem is not reportable trac#852
+- made the config_item_info structure private
+- added workflows trac#822
+- added x,--expert cmdline option to enable expert mode
+- switch comment and event selector page
+- use get_ and set_ functions to access event_config_t
+- reporter-bz: don't return NULL on %non_existing_item% - use "" instead
+- refactoring the xml and conf loader code related to trac#822
+- reporter-bugzilla: add a --debug option
+- reporter-bz: fix a summary line formatting bug
+- let logging_callback and post_run_callback members be None
+- expose make_run_event_state_forwarding() in Python API
+- reporter-bz: change syntax of bugzilla_format_*.conf to require "text::", not "text:"
+- reporter-bz: add support for line continuation and simple text in bugzilla_format*.conf
+
+* Mon Dec 03 2012 Jakub Filak <jfilak@redhat.com> 2.0.19-3
 - add a description of AVC to bugzilla comment 0
 
-* Thu Nov 29 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.19-2.R
+* Mon Nov 26 2012 Jakub Filak <jfilak@redhat.com> 2.0.19-2
 - fix bugzilla summary formatting
-- Resolves: #880191
+- Resolves: #879846
 
-* Sun Nov 25 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.19-1.R
-- update to 2.0.19
+* Wed Nov 14 2012 Jakub Filak <jfilak@redhat.com> 2.0.19-1
+- introduce a new formating feature for Bugzilla plugin
+- use gtk_show_uri() instead of own launcher
+- update kerneloops urls
+- don't force the minimal rating trac#854
+- add support for forwarding of report client requests
+- fix i18n in event client communication protocol
+- add event name to the error message - can't get secret item
+- switch all load_conf_file() calls to use skipKeysWithoutValue=false
+- hide the spinner when the event processing is finishes trac#852
+- add a method for loading of configuration of a single event
+- unlock secret collection only on meaningful demand
+- fix secret item look up for gnome-keyring
 
-* Fri Nov  2 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.18-1.R
-- update to 2.0.18
+* Thu Nov 01 2012 Jakub Filak <jfilak@redhat.com> 2.0.18-1
+- reporter-bz: tighten up checking that BZ server gave us its version; fix recently broken settings parsing
+- reporter-bz: make selinux-policy special case controllable from config file
+- reporter-bz: if we create a new bug but cross-version dup exists, add a note
+- reporter-bz: make rhbz_search_duphash static, use it more widely
 
-* Sun Oct 28 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.17-1.R
-- update to 2.0.17
+* Wed Oct 24 2012 Jakub Filak <jfilak@redhat.com> 2.0.17-1
+- update CWD after stealing of a dump directory
+- get product/version from system configuration
+- shorten bz summary if its length exceeds 255 chars
+- add full kerneloops to the uReport
+- reporter-bz: require bz version match when searching for dups. Closes rhbz#849833
+- reporter-bz: eliminate bugzilla_struct::b_product - use auto var instead
+- Move struct bugzilla_struct to its only user, reporter-bugzilla.c
+- reporter-bz: do not needlessly open dd if -f; assorted small fixes
+- added relro to reportclient.so and _pyreport.so rhbz#812283
+- bz reporter: include ROOTDIR, OS_RELEASE_IN_ROOTDIR, EXECUTABLE elements
+- Fix report-newt segfault
+- Resolves: #741647, #812283, #849833, #867118, #869032
 
-* Wed Oct 16 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.16-1.R
-- update to 2.0.16
+* Thu Oct 11 2012 Jakub Filak <jfilak@redhat.com> 2.0.16-1
+- expand events from a chain and process expanded events separately
+- report-gtk: move selection of event to a right place
+- fix a crash while report-gtk startup (use the correct variable)
+- wizard: allow "non-reportable" reporting for experts; disallow it for non-experts
+- fix typo in function name, remove unnecessary forward declaratioins
+- wizard: fix a thinko in last commit (thanks Jakub)
+- wizard: check for NON_REPORTABLE file, stop if it exists.FILE
+- wizard: remove unnecessary if (1) {...} block. No code changes
+- don't update the selected event while processing it
+- check D-Bus err name without leaking nor crashing
+- ureport: always include offset
+- add Makefile target release-fix
+- Resolves: #864803, #864803, #863595
 
-* Mon Oct  1 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.14-1.R
-- update to 2.0.14
+* Fri Oct 05 2012 Jakub Filak <jfilak@redhat.com> 2.0.15-1
+- remove unnecessary flag from words highlighting functions
+- report-gtk: rework forbidden words highlighting
+- add xmalloc_fopen_fgetline_fclose helper for reading one-line files
+- update GUI before highlighting of forbidden words
+- clear warnings after switching to a next page
+- tweak conditions in show next forbidden word functions
+- reporter-ureport: respect chrooted os_release
+- Fix typos.
+- rhbz#861679: report-gtk: immediately release dump directory lock
+- add a few helpers for reading files as one malloced block
 
-* Thu Sep 13 2012 Arkady L. Shane <ashejn@russianfedora.ru> 2.0.13-2.R
-- send Fedora to bugzilla instead of RFRemix
+* Fri Sep 21 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.14-1
+- added error callback to get notification about download failure rhbz#786640
+- rhbz#767186: show a link to a page describing the ABRT configuration
+- spec: silence rpmdiff rhbz#857425
+- don't show the credential in logs rhbz#856960
+- rhbz#852165: warn if adding commands without any rule condition
+- rhbz#851855: process ureport server errors correctly
+- reporter-bugzilla: fix adding users to CC. (Partially?) closes rhbz#841338
+- Resolves: #786640, #767186, #857425, #856960, #852165, #851855, #841338
 
 * Wed Aug 29 2012 Jakub Filak <jfilak@redhat.com> 2.0.13-2
-- ureport doesn't fail on "Validition error" server response
+- increment the release number due to rebuild for F17 package
 
-* Wed Aug 22 2012 Jakub Filak <jfilak@redhat.com> 2.0.13-1
+* Tue Aug 21 2012 Jakub Filak <jfilak@redhat.com> 2.0.13-1
+- rhbz#741255: don't autodetect executable for sealert reports
 - reporter-ureport: save backtrace hash to reported_to
 - trac#683: show the description file in bugzilla comment 0
 - trac#684: report-gtk saves only loaded files
@@ -478,9 +702,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 - add python binding for problem_data_send_to_abrt
 - reporter-ureport: attach bug ID from reported_to
 - reporter-ureport: make configurable only URL to a server
+- Resolves: #741255
 
 * Wed Aug 15 2012 Jakub Filak <jfilak@redhat.com> 2.0.12-5
-- ureport doesn't fail on "Validition error" server response
 - rhbz#741255: don't autodetect executable for sealert reports
 - show message from the server for known uReports
 - trac#678: reporter-bugzilla: do not attach empty files
@@ -520,6 +744,8 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 * Tue Jul 31 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.11-1
 - new upstream release
 
+* Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.10-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
 
 * Fri Jun 01 2012 Jiri Moskovcak <jmoskovc@redhat.com> 2.0.10-4
 - fixed build on rhel7
