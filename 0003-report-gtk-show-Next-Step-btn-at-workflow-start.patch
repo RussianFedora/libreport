@@ -1,0 +1,34 @@
+From cb4369636011ca5824d8285d09fe568451e80761 Mon Sep 17 00:00:00 2001
+From: Jiri Moskovcak <jmoskovc@redhat.com>
+Date: Tue, 2 Apr 2013 11:10:26 +0200
+Subject: [LIBREPORT PATCH 3/5] report-gtk: show Next Step btn at workflow
+ start
+
+Closes rhbz#926916
+
+Signed-off-by: Jakub Filak <jfilak@redhat.com>
+Signed-off-by: Jiri Moskovcak <jmoskovc@redhat.com>
+---
+ src/gui-wizard-gtk/wizard.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/gui-wizard-gtk/wizard.c b/src/gui-wizard-gtk/wizard.c
+index 1db97b2..b55b975 100644
+--- a/src/gui-wizard-gtk/wizard.c
++++ b/src/gui-wizard-gtk/wizard.c
+@@ -2509,6 +2509,12 @@ static void set_auto_event_chain(GtkButton *button, gpointer user_data)
+         on_page_prepare(g_assistant, gtk_notebook_get_nth_page(g_assistant, next_page_no), NULL);
+     else
+         gtk_notebook_set_current_page(g_assistant, next_page_no);
++
++    /* Show Next Step button which was hidden on Selector page in non-expert
++     * mode. Next Step button must be hidden because Selector page shows only
++     * workflow buttons in non-expert mode.
++     */
++    show_next_step_button();
+ }
+ 
+ static void add_workflow_buttons(GtkBox *box, GHashTable *workflows, GCallback func)
+-- 
+1.8.1.4
+

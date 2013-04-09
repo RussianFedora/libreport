@@ -4,15 +4,20 @@
 
 Summary: Generic library for reporting various problems
 Name: libreport
-Version: 2.1.2
+Version: 2.1.3
 Release: 2%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
 Source: https://fedorahosted.org/released/abrt/%{name}-%{version}.tar.gz
+Source1: autogen.sh
 # Remove this patch with libreport-2.1.3
-Patch0: libreport-2.1.2-fix_empty_archives_for_emergency_analysis.patch
 Patch1:	libreport-2.1.2-read-fedora-release.patch
+
+Patch10: 0001-reporter-rhtsupport-fix-hint-query-to-use-correct-UR.patch
+Patch11: 0002-curl-upload-helper-upload-data-with-application-octe.patch
+Patch12: 0003-report-gtk-show-Next-Step-btn-at-workflow-start.patch
+Patch13: 0004-fixed-reporting-from-bugzilla-rhbz-926916.patch
 
 BuildRequires: dbus-devel
 BuildRequires: gtk3-devel
@@ -245,6 +250,15 @@ Default configuration for reporting bugs via Fedora infrastructure
 used to easy configure the reporting process for Fedora sytems. Just
 install this package and you're done.
 
+%package rhel
+Summary: Default configuration for reporting bugs via Red Hat infrastructure
+Group: Applications/File
+
+%description rhel
+Default configuration for reporting bugs via Red Hat infrastructure
+used to easy configure the reporting process for Red Hat sytems. Just
+install this package and you're done.
+
 %package anaconda
 Summary: Default configuration for reporting anaconda bugs
 Group: Applications/File
@@ -257,11 +271,17 @@ infrastructure or uploading the gathered data over ftp/scp...
 
 %prep
 %setup -q
-%patch0 -p1 -b .updateex
 %patch1 -p1 -b .rfremix
 
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+# koji in f19 has new autotools, so we need to regenerate everything
+cp %SOURCE1 %_builddir/%{name}-%{version}
+./autogen.sh
+
 %build
-autoconf
 # Commented because of deprecated GTK API
 #CFLAGS="%{optflags} -Werror" %configure --disable-silent-rules
 CFLAGS="%{optflags}" %configure --enable-doxygen-docs --disable-silent-rules
@@ -450,14 +470,27 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_sysconfdir}/libreport/workflows/workflow_Fedora.xml
 %config(noreplace) %{_sysconfdir}/libreport/workflows.d/report_fedora.conf
 
+%files rhel
+%defattr(-,root,root,-)
+%{_sysconfdir}/libreport/workflows/workflow_RHELCCpp.xml
+%{_sysconfdir}/libreport/workflows/workflow_RHELKerneloops.xml
+%{_sysconfdir}/libreport/workflows/workflow_RHELPython.xml
+%{_sysconfdir}/libreport/workflows/workflow_RHELvmcore.xml
+%{_sysconfdir}/libreport/workflows/workflow_RHELxorg.xml
+%config(noreplace) %{_sysconfdir}/libreport/workflows.d/report_rhel.conf
+
 %files anaconda
 %defattr(-,root,root,-)
 %{_sysconfdir}/libreport/workflows/workflow_AnacondaFedora.xml
 %{_sysconfdir}/libreport/workflows/workflow_AnacondaUpload.xml
 %config(noreplace) %{_sysconfdir}/libreport/workflows.d/anaconda_event.conf
+%config(noreplace) %{_sysconfdir}/libreport/events.d/bugzilla_anaconda_event.conf
 
 
 %changelog
+* Tue Apr  9 2013 Arkady L. Shane <ashejn@russianfedora.ru> 2.1.3-2.R
+- update to 2.1.3
+
 * Tue Mar 26 2013 Arkady L. Shane <ashejn@russianfedora.ru> 2.1.2-2.R
 - use /etc/rfremix-release to detect os name
 
