@@ -5,7 +5,7 @@
 Summary: Generic library for reporting various problems
 Name: libreport
 Version: 2.1.3
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+
 Group: System Environment/Libraries
 URL: https://fedorahosted.org/abrt/
@@ -18,6 +18,7 @@ Patch10: 0001-reporter-rhtsupport-fix-hint-query-to-use-correct-UR.patch
 Patch11: 0002-curl-upload-helper-upload-data-with-application-octe.patch
 Patch12: 0003-report-gtk-show-Next-Step-btn-at-workflow-start.patch
 Patch13: 0004-fixed-reporting-from-bugzilla-rhbz-926916.patch
+Patch14: 0008-added-report-cli-event-for-anaconda-should-help-with.patch
 
 BuildRequires: dbus-devel
 BuildRequires: gtk3-devel
@@ -277,6 +278,7 @@ infrastructure or uploading the gathered data over ftp/scp...
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
+%patch14 -p1
 # koji in f19 has new autotools, so we need to regenerate everything
 cp %SOURCE1 %_builddir/%{name}-%{version}
 ./autogen.sh
@@ -488,6 +490,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Fri Apr 12 2013 Jakub Filak <jfilak@redhat.com> 2.1.3-3.R
+- fixed reporting from anaconda in text mode (#949603)
+
 * Tue Apr  9 2013 Arkady L. Shane <ashejn@russianfedora.ru> 2.1.3-2.R
 - update to 2.1.3
 
